@@ -145,26 +145,28 @@
         </div>
       </section>
 
-      <!-- パーティー編成枠 -->
+<!-- パーティー構成枠（更新版） -->
       <section class="card">
-        <h2>パーティー構成</h2>
+        <h2>パーティー構成・仲間バフ</h2>
         <div class="party-grid">
           <div class="party-slot main">
             <span id="partyMain">メインアタッカー</span>
           </div>
           <div class="party-slot">
-            <span>サブ / サポート 1</span>
-            <input type="text" placeholder="名前">
+            <span>サポート 1</span>
+            <select id="partyMember1" class="party-select"></select>
           </div>
           <div class="party-slot">
-            <span>サブ / サポート 2</span>
-            <input type="text" placeholder="名前">
+            <span>サポート 2</span>
+            <select id="partyMember2" class="party-select"></select>
           </div>
           <div class="party-slot">
-            <span>耐久 / サポート 3</span>
-            <input type="text" placeholder="名前">
+            <span>サポート 3</span>
+            <select id="partyMember3" class="party-select"></select>
           </div>
         </div>
+        <!-- パーティーバフON/OFFチェッカー -->
+        <div id="partyBuffsContainer" style="margin-top: 10px;"></div>
       </section>
     </div>
 
