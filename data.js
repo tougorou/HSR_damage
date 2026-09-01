@@ -1,10 +1,201 @@
-// キャラクター・光円錐・攻撃データをここへ追加していく設計です。
-// 数値は現在「土台用」のサンプルです。実ゲームの全固有効果は次段階で実装します。
-const HSR_DATA={
- characters:{
-  gilgamesh:{name:'ギルガメッシュ',element:'雷',path:'壊滅',level:90,atk:3742,critRate:100,critDmg:150,speed:100,attacks:{basic:{name:'通常攻撃',multiplier:100},skill:{name:'戦闘スキル',multiplier:200},ult:{name:'必殺技',multiplier:300},talent:{name:'天賦',multiplier:150}}}
- },
- lightCones:{
-  none:{name:'未装備',atk:0},sample:{name:'サンプル光円錐',atk:0}
- }
+// ========================================
+// HSR Damage Calculator - Master Data
+// ========================================
+
+const HSR_DATA = {
+
+  // ----------------------------------------
+  // キャラクター
+  // ----------------------------------------
+  characters: {
+
+    gilgamesh: {
+      id: 'gilgamesh',
+      name: 'ギルガメッシュ',
+
+      element: '雷',
+      path: '壊滅',
+
+      level: 90,
+
+      // 基礎ステータス
+      baseStats: {
+        hp: 0,
+        atk: 3742,
+        def: 0,
+        speed: 100
+      },
+
+      // 入力画面に表示する初期値
+      stats: {
+        critRate: 100,
+        critDmg: 150,
+        elementDmg: 0
+      },
+
+      // 攻撃
+      attacks: {
+
+        basic: {
+          id: 'basic',
+          name: '通常攻撃',
+          type: 'basic',
+          multiplier: 100,
+          damageType: 'direct'
+        },
+
+        skill: {
+          id: 'skill',
+          name: '戦闘スキル',
+          type: 'skill',
+          multiplier: 200,
+          damageType: 'direct'
+        },
+
+        ult: {
+          id: 'ult',
+          name: '必殺技',
+          type: 'ult',
+          multiplier: 300,
+          damageType: 'direct'
+        },
+
+        talent: {
+          id: 'talent',
+          name: '天賦',
+          type: 'talent',
+          multiplier: 150,
+          damageType: 'direct'
+        }
+
+      },
+
+      // キャラクター固有バフ
+      effects: [],
+
+      // 星魂
+      eidolons: {
+        E1: [],
+        E2: [],
+        E3: [],
+        E4: [],
+        E5: [],
+        E6: []
+      },
+
+      // 軌跡
+      traces: {
+        basic: 0,
+        skill: 0,
+        talent: 0,
+        ult: 0
+      }
+    }
+
+  },
+
+
+  // ----------------------------------------
+  // 光円錐
+  // ----------------------------------------
+  lightCones: {
+
+    none: {
+      id: 'none',
+      name: '未装備',
+
+      path: null,
+
+      baseStats: {
+        hp: 0,
+        atk: 0,
+        def: 0
+      },
+
+      effects: []
+    },
+
+    sample: {
+      id: 'sample',
+      name: 'サンプル光円錐',
+
+      path: '壊滅',
+
+      baseStats: {
+        hp: 0,
+        atk: 0,
+        def: 0
+      },
+
+      effects: []
+    }
+
+  },
+
+
+  // ----------------------------------------
+  // 遺物セット
+  // ----------------------------------------
+  relicSets: {
+
+    none: {
+      id: 'none',
+      name: '未装備',
+      effects: []
+    }
+
+  },
+
+
+  // ----------------------------------------
+  // オーナメント
+  // ----------------------------------------
+  ornaments: {
+
+    none: {
+      id: 'none',
+      name: '未装備',
+      effects: []
+    }
+
+  },
+
+
+  // ----------------------------------------
+  // バフ
+  // ----------------------------------------
+  buffs: {
+
+    none: {
+      id: 'none',
+      name: 'なし'
+    }
+
+  },
+
+
+  // ----------------------------------------
+  // 敵
+  // ----------------------------------------
+  enemies: {
+
+    standard: {
+      id: 'standard',
+      name: '標準敵',
+
+      level: 95,
+
+      stats: {
+        hp: 0,
+        def: 0,
+        resistance: 0
+      },
+
+      weaknesses: [],
+
+      effects: []
+    }
+
+  }
+
 };
