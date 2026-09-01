@@ -123,7 +123,7 @@ const HSR_DATA = {
 
       baseStats: {
         hp: 0,
-        atk: 0,
+        atk: 500,
         def: 0
       },
 
