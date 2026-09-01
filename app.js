@@ -169,14 +169,30 @@ function loadAttack() {
 
 function calculateAttackPower() {
 
-  const baseAtk = n('atk');
+  const characterAtk = n('atk');
+
+  const lightConeId = $('lightConeSelect').value;
+
+  const lightCone =
+    HSR_DATA.lightCones[lightConeId];
+
+  const lightConeAtk =
+    lightCone?.baseStats?.atk || 0;
 
   const relicAtk = p('relicAtk');
 
   const buffAtk = p('buffAtk');
 
 
-  return baseAtk * (1 + relicAtk + buffAtk);
+  // キャラクター基礎攻撃力
+  // ＋ 光円錐基礎攻撃力
+  const baseAtk =
+    characterAtk + lightConeAtk;
+
+
+  // 攻撃力%バフ
+  return baseAtk *
+    (1 + relicAtk + buffAtk);
 
 }
 
