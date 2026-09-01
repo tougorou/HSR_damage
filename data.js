@@ -176,7 +176,7 @@ clara_signature: {
 
       triggerLimit: 'oncePerTurn'
     }
-  ]
+  }
 },
 
 
