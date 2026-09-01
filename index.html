@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HSR Damage Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><div class="logo">HSR DAMAGE CALCULATOR</div><div class="sub">Personal Honkai: Star Rail Damage Simulator</div></div>
+    <div class="top-actions"><button id="saveBtn">設定保存</button><button id="loadBtn">設定読込</button><button id="resetBtn">リセット</button></div>
+  </header>
+
+  <main class="app">
+    <aside class="sidebar">
+      <section class="card">
+        <h2>キャラクター</h2>
+        <label>キャラクター<select id="characterSelect"></select></label>
+        <div class="row"><label>Lv<input id="charLevel" type="number" min="1" max="90"></label><label>星魂<select id="eidolon"><option value="0">E0</option><option value="1">E1</option><option value="2">E2</option><option value="3">E3</option><option value="4">E4</option><option value="5">E5</option><option value="6">E6</option></select></label></div>
+        <div class="row"><label>攻撃力<input id="atk" type="number" step="0.1"></label><label>会心率<input id="critRate" type="number" step="0.1"></label></div>
+        <div class="row"><label>会心ダメージ<input id="critDmg" type="number" step="0.1"></label><label>属性与ダメ<input id="elementDmg" type="number" step="0.1"></label></div>
+        <label>速度<input id="speed" type="number" step="0.1"></label>
+      </section>
+
+      <section class="card">
+        <h2>装備</h2>
+        <label>光円錐<select id="lightConeSelect"></select></label>
+        <div class="row"><label>光円錐Lv<input id="coneLevel" type="number" min="1" max="80"></label><label>重畳ランク<select id="coneSuper"><option>S1</option><option>S2</option><option>S3</option><option>S4</option><option>S5</option></select></label></div>
+        <label>遺物セット<input id="relicSet" placeholder="例：○○4セット"></label>
+        <div class="row"><label>攻撃力%<input id="relicAtk" type="number" step="0.1" value="0"></label><label>速度<input id="relicSpeed" type="number" step="0.1" value="0"></label></div>
+      </section>
+
+      <section class="card">
+        <h2>攻撃</h2>
+        <label>攻撃<select id="attackSelect"></select></label>
+        <label>倍率 (%)<input id="multiplier" type="number" step="0.1"></label>
+        <label>固定加算<input id="flatDamage" type="number" step="0.1" value="0"></label>
+        <div class="row"><label>会心<select id="critMode"><option value="crit">会心</option><option value="noncrit">非会心</option><option value="average">期待値</option></select></label><label>ヒット数<input id="hits" type="number" min="1" value="1"></label></div>
+      </section>
+    </aside>
+
+    <section class="center">
+      <section class="card hero">
+        <div class="hero-title"><div><span id="resultCharacter">-</span><span class="badge" id="resultElement">-</span></div><span id="resultAttack">-</span></div>
+        <div class="damage-number" id="damage">0</div>
+        <div class="damage-caption">1ヒットあたりの最終ダメージ</div>
+        <div class="quick-stats"><div><span>会心</span><b id="qCrit">1.0000</b></div><div><span>与ダメ</span><b id="qDmg">1.0000</b></div><div><span>防御</span><b id="qDef">1.0000</b></div><div><span>耐性</span><b id="qRes">1.0000</b></div></div>
+      </section>
+
+      <section class="card"><h2>ダメージ内訳</h2><div class="breakdown" id="breakdown"></div></section>
+      <section class="card"><h2>パーティー</h2><div class="party-grid"><div class="party-slot main">1<br><b id="partyMain">-</b></div><div class="party-slot">2<br><input placeholder="キャラクター"></div><div class="party-slot">3<br><input placeholder="キャラクター"></div><div class="party-slot">4<br><input placeholder="キャラクター"></div></div></section>
+    </section>
+
+    <aside class="rightbar">
+      <section class="card"><h2>敵</h2><div class="row"><label>Lv<input id="enemyLevel" type="number" value="95"></label><label>防御力<input id="enemyDef" type="number" value="0"></label></div><div class="row"><label>防御ダウン%<input id="defDown" type="number" value="0" step="0.1"></label><label>防御無視%<input id="defIgnore" type="number" value="0" step="0.1"></label></div><div class="row"><label>耐性%<input id="resistance" type="number" value="0" step="0.1"></label><label>被ダメUP%<input id="takenUp" type="number" value="0" step="0.1"></label></div><label>弱点撃破<select id="broken"><option value="0.9">未撃破</option><option value="1">弱点撃破</option></select></label></section>
+      <section class="card"><h2>追加バフ</h2><div class="row"><label>攻撃力%<input id="buffAtk" type="number" value="0" step="0.1"></label><label>与ダメ%<input id="buffDmg" type="number" value="0" step="0.1"></label></div><div class="row"><label>会心率%<input id="buffCrit" type="number" value="0" step="0.1"></label><label>会心ダメ%<input id="buffCritDmg" type="number" value="0" step="0.1"></label></div></section>
+      <section class="card"><h2>実戦設定</h2><label><input id="weakPoint" type="checkbox"> 弱点属性</label><label><input id="maxTrace" type="checkbox" checked> 軌跡Lvを最大として扱う</label><label><input id="showFormula" type="checkbox" checked> 計算式を表示</label></section>
+    </aside>
+  </main>
+  <footer>Personal / Unofficial / Data-driven architecture</footer>
+  <script src="data.js"></script><script src="app.js"></script>
+</body>
+</html>
