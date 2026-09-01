@@ -115,22 +115,69 @@ const HSR_DATA = {
       effects: []
     },
 
-    sample: {
-      id: 'sample',
-      name: 'サンプル光円錐',
+clara_signature: {
+  id: 'clara_signature',
+  name: 'かけがえのないもの',
 
-      path: '壊滅',
+  path: '壊滅',
 
-      baseStats: {
-        hp: 0,
-        atk: 500,
-        def: 0
-      },
-
-      effects: []
-    }
-
+  baseStats: {
+    hp: 1164,
+    atk: 582,
+    def: 396
   },
+
+  superimposition: {
+    S1: {
+      atkPercent: 24,
+      healPercent: 8,
+      damagePercent: 24
+    },
+
+    S2: {
+      atkPercent: 28,
+      healPercent: 9,
+      damagePercent: 28
+    },
+
+    S3: {
+      atkPercent: 32,
+      healPercent: 10,
+      damagePercent: 32
+    },
+
+    S4: {
+      atkPercent: 36,
+      healPercent: 11,
+      damagePercent: 36
+    },
+
+    S5: {
+      atkPercent: 40,
+      healPercent: 12,
+      damagePercent: 40
+    }
+  },
+
+  effects: [
+    {
+      id: 'family',
+      name: '家族',
+      type: 'conditional',
+
+      conditions: [
+        'enemyDefeated',
+        'ownerHit'
+      ],
+
+      duration: 'untilNextTurn',
+
+      stackable: false,
+
+      triggerLimit: 'oncePerTurn'
+    }
+  ]
+}
 
 
   // ----------------------------------------
