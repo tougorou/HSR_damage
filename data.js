@@ -179,19 +179,28 @@ const HSR_DATA = {
     }
   },
 
-  relicSets: {
+relicSets: {
     none: { id: 'none', name: 'なし', atkPercent: 0, critRate: 0, critDmg: 0, damagePercent: 0, defIgnore: 0 },
     musketeer: { id: 'musketeer', name: '草穂ガンマン (4)', atkPercent: 12, damagePercent: 10 },
     longevous: { id: 'longevous', name: '宝命長存の弟子 (4)', critRate: 16 },
     pioneer: { id: 'pioneer', name: '死水に潜る先駆者 (4)', damagePercent: 12, critRate: 8, critDmg: 24 },
-    prisoner: { id: 'prisoner', name: '深牢に繋がれる囚人 (4)', atkPercent: 12, defIgnore: 18 }
+    prisoner: { id: 'prisoner', name: '深牢に繋がれる囚人 (4)', atkPercent: 12, defIgnore: 18 },
+    
+    // --- 新規追加 ---
+    scholar: { id: 'scholar', name: '知識の海に溺れる学者 (4)', critRate: 8, damagePercent: 20 },
+    captain: { id: 'captain', name: '荒海を超える船長 (4)', atkPercent: 12, damagePercent: 16 },
+    artisan: { id: 'artisan', name: '神業を探求する名匠 (4)', speed: 6, critDmg: 18 },
+    sun_thunder: { id: 'sun_thunder', name: '烈陽と雷鳴の武神 (4)', damagePercent: 10, defIgnore: 12 }
   },
 
-  ornamentSets: {
+ornamentSets: {
     none: { id: 'none', name: 'なし', atkPercent: 0, critRate: 0, critDmg: 0, damagePercent: 0 },
-    salsotto: { id: 'salsotto', name: '自転の自認サルソット (2)', critRate: 8, damagePercent: 15 },
     arena: { id: 'arena', name: '星々の競技場 (2)', critRate: 8, damagePercent: 20 },
     glamoth: { id: 'glamoth', name: '蒼穹戦線グラモト (2)', atkPercent: 12, damagePercent: 18 },
-    keel: { id: 'keel', name: '折れた竜骨 (2)', critDmg: 10 }
+
+    // --- 修正・追加 ---
+    keel: { id: 'keel', name: '折れた竜骨 (2)', critDmg: 10 },
+    salsotto: { id: 'salsotto', name: '自転が止まったサルソット (2)', critRate: 8, damagePercent: 15 },
+    astronomical_institute: { id: 'astronomical_institute', name: '宇宙生命科学研究院 (2)', atkPercent: 12, damagePercent: 12 },
+    bone_collector: { id: 'bone_collector', name: '静謐な拾骨地 (2)', critDmg: 16 }
   }
-};
