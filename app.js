@@ -9,10 +9,7 @@ const p = id => n(id) / 100;
 function init() {
   const characterSelect = $('characterSelect');
   const lightConeSelect = $('lightConeSelect');
-  const relicSetSelect = $('relicSetSelect');
-  const ornamentSetSelect = $('ornamentSetSelect');
 
-  // キャラ選択初期化
   if (characterSelect && HSR_DATA.characters) {
     characterSelect.innerHTML = '';
     Object.entries(HSR_DATA.characters).forEach(([id, character]) => {
@@ -24,7 +21,6 @@ function init() {
     characterSelect.addEventListener('change', loadCharacter);
   }
 
-  // 光円錐初期化
   if (lightConeSelect && HSR_DATA.lightCones) {
     lightConeSelect.innerHTML = '';
     Object.entries(HSR_DATA.lightCones).forEach(([id, cone]) => {
@@ -36,33 +32,26 @@ function init() {
     lightConeSelect.addEventListener('change', loadLightCone);
   }
 
-  // 遺物セット初期化
-  if (relicSetSelect && HSR_DATA.relicSets) {
-    relicSetSelect.innerHTML = '';
-    Object.entries(HSR_DATA.relicSets).forEach(([id, set]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = set.name;
-      relicSetSelect.appendChild(option);
-    });
-    relicSetSelect.addEventListener('change', calculate);
-  }
+  ['relicSetSelect', 'ornamentSetSelect'].forEach(id => {
+    const el = $(id);
+    const dataObj = id === 'relicSetSelect' ? HSR_DATA.relicSets : HSR_DATA.ornamentSets;
+    if (el && dataObj) {
+      el.innerHTML = '';
+      Object.entries(dataObj).forEach(([k, set]) => {
+        const option = document.createElement('option');
+        option.value = k;
+        option.textContent = set.name;
+        el.appendChild(option);
+      });
+      el.addEventListener('change', calculate);
+    }
+  });
 
-  // オーナメントセット初期化
-  if (ornamentSetSelect && HSR_DATA.ornamentSets) {
-    ornamentSetSelect.innerHTML = '';
-    Object.entries(HSR_DATA.ornamentSets).forEach(([id, set]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = set.name;
-      ornamentSetSelect.appendChild(option);
-    });
-    ornamentSetSelect.addEventListener('change', calculate);
-  }
+  initPartySlots();
 
   $('charLevel')?.addEventListener('change', updateCharacterStats);
-  $('eidolonSelect')?.addEventListener('change', calculate);
   $('coneLevel')?.addEventListener('change', loadLightCone);
+  $('eidolonSelect')?.addEventListener('change', calculate);
   $('coneSuper')?.addEventListener('change', loadLightCone);
 
   document.querySelectorAll('input, select').forEach(element => {
@@ -78,7 +67,21 @@ function init() {
   loadLightCone();
 }
 
-// キャラクターロード
+function initPartySlots() {
+  const partySelects = [$('partyMember1'), $('partyMember2'), $('partyMember3')];
+  partySelects.forEach(select => {
+    if (!select) return;
+    select.innerHTML = '<option value="none">なし</option>';
+    Object.entries(HSR_DATA.characters).forEach(([id, char]) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = char.name;
+      select.appendChild(option);
+    });
+    select.addEventListener('change', renderPartyBuffs);
+  });
+}
+
 function loadCharacter() {
   const charId = $('characterSelect')?.value;
   const character = HSR_DATA?.characters?.[charId];
@@ -107,60 +110,69 @@ function loadCharacter() {
   updateAttackMultiplier();
 }
 
-// 星魂（凸）選択肢描画
 function renderEidolonOptions(character) {
   const eidolonSelect = $('eidolonSelect');
   if (!eidolonSelect) return;
-
   eidolonSelect.innerHTML = '';
-
-  if (character.eidolons && Object.keys(character.eidolons).length > 0) {
-    Object.entries(character.eidolons).forEach(([level, data]) => {
-      const option = document.createElement('option');
-      option.value = level;
-      option.textContent = data.name || (level === '0' ? '無凸' : `${level}凸`);
-      eidolonSelect.appendChild(option);
-    });
-  } else {
-    for (let i = 0; i <= 6; i++) {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = i === 0 ? '無凸' : `${i}凸`;
-      eidolonSelect.appendChild(option);
-    }
-  }
+  Object.entries(character.eidolons || {}).forEach(([lvl, data]) => {
+    const option = document.createElement('option');
+    option.value = lvl;
+    option.textContent = data.name || `${lvl}凸`;
+    eidolonSelect.appendChild(option);
+  });
 }
 
-// 自己バフUI描画
 function renderSelfBuffs(character) {
   const container = $('selfBuffsContainer');
   if (!container) return;
-
   container.innerHTML = '';
-  if (!character.selfBuffs) return;
-
-  Object.entries(character.selfBuffs).forEach(([key, buff]) => {
+  Object.entries(character.selfBuffs || {}).forEach(([key, buff]) => {
     const label = document.createElement('label');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = `selfBuff_${key}`;
     checkbox.checked = true;
     checkbox.addEventListener('change', calculate);
-
     label.appendChild(checkbox);
     label.appendChild(document.createTextNode(` ${buff.name}`));
     container.appendChild(label);
   });
 }
 
-// ステータス動的更新
+function renderPartyBuffs() {
+  const container = $('partyBuffsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const members = [$('partyMember1')?.value, $('partyMember2')?.value, $('partyMember3')?.value];
+  members.forEach((memberId, idx) => {
+    if (!memberId || memberId === 'none') return;
+    const char = HSR_DATA.characters[memberId];
+    if (char && char.providedPartyBuffs) {
+      Object.entries(char.providedPartyBuffs).forEach(([bKey, buff]) => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `partyBuff_${idx}_${bKey}`;
+        checkbox.checked = true;
+        checkbox.addEventListener('change', calculate);
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(` [${char.name}] ${buff.name}`));
+        container.appendChild(label);
+      });
+    }
+  });
+
+  calculate();
+}
+
 function updateCharacterStats() {
   const charId = $('characterSelect')?.value;
   const level = $('charLevel')?.value || 80;
   const character = HSR_DATA?.characters?.[charId];
   if (!character) return;
 
-  const baseStats = character.statsByLevel?.[level] || character.statsByLevel?.[80] || { atk: 0, speed: 100 };
+  const baseStats = character.statsByLevel?.[level] || character.statsByLevel?.[80] || { atk: 0 };
   const traceStats = character.traceStats || {};
 
   if ($('atk')) $('atk').value = baseStats.atk || 0;
@@ -171,7 +183,6 @@ function updateCharacterStats() {
   calculate();
 }
 
-// スキル倍率更新
 function updateAttackMultiplier() {
   const charId = $('characterSelect')?.value;
   const attackId = $('attackSelect')?.value;
@@ -181,20 +192,16 @@ function updateAttackMultiplier() {
   const attack = character.attacks?.[attackId];
   if (!attack) return;
 
-  const defaultTraceLevel = attack.type === 'basic' ? 6 : 10;
-  const multiplier = attack.multipliers?.[defaultTraceLevel] || attack.multipliers?.[1] || 100;
-
+  const multiplier = attack.multipliers?.[10] || attack.multipliers?.[6] || attack.multipliers?.[1] || 100;
   if ($('multiplier')) $('multiplier').value = multiplier;
 
   calculate();
 }
 
-// 光円錐ロード
 function loadLightCone() {
   const coneId = $('lightConeSelect')?.value;
   const rank = $('coneSuper')?.value || 'S1';
   const cone = HSR_DATA?.lightCones?.[coneId];
-
   if (!cone) return;
 
   const superBuffs = cone.superimposition?.[rank] || {};
@@ -205,32 +212,21 @@ function loadLightCone() {
   calculate();
 }
 
-// バフ・遺物効果の合算収集
 function collectAllBuffs(character) {
-  const result = {
-    atkPercent: 0,
-    critRate: 0,
-    critDmg: 0,
-    damagePercent: 0,
-    defIgnore: 0,
-    resPen: 0
-  };
+  const result = { atkPercent: 0, critRate: 0, critDmg: 0, damagePercent: 0, defIgnore: 0, resPen: 0 };
 
-  // 1. キャラ固有バフ
-  if (character.selfBuffs) {
-    Object.entries(character.selfBuffs).forEach(([key, buff]) => {
-      const cb = $(`selfBuff_${key}`);
-      if (cb && cb.checked) {
-        if (buff.atkPercent) result.atkPercent += buff.atkPercent;
-        if (buff.critRate) result.critRate += buff.critRate;
-        if (buff.critDmg) result.critDmg += buff.critDmg;
-        if (buff.damagePercent) result.damagePercent += buff.damagePercent;
-        if (buff.resPen) result.resPen += buff.resPen;
-      }
-    });
-  }
+  // 固有バフ
+  Object.entries(character.selfBuffs || {}).forEach(([k, buff]) => {
+    if ($(`selfBuff_${k}`)?.checked) {
+      if (buff.atkPercent) result.atkPercent += buff.atkPercent;
+      if (buff.critRate) result.critRate += buff.critRate;
+      if (buff.critDmg) result.critDmg += buff.critDmg;
+      if (buff.damagePercent) result.damagePercent += buff.damagePercent;
+      if (buff.resPen) result.resPen += buff.resPen;
+    }
+  });
 
-  // 2. 星魂（凸）効果
+  // 星魂（凸）
   const eidolonLevel = Number($('eidolonSelect')?.value || 0);
   if (character.eidolons) {
     for (let i = 1; i <= eidolonLevel; i++) {
@@ -245,49 +241,45 @@ function collectAllBuffs(character) {
     }
   }
 
-  // 3. トンネル遺物セット効果
-  const relicSetId = $('relicSetSelect')?.value;
-  const relicSet = HSR_DATA?.relicSets?.[relicSetId];
-  if (relicSet) {
-    if (relicSet.atkPercent) result.atkPercent += relicSet.atkPercent;
-    if (relicSet.critRate) result.critRate += relicSet.critRate;
-    if (relicSet.critDmg) result.critDmg += relicSet.critDmg;
-    if (relicSet.damagePercent) result.damagePercent += relicSet.damagePercent;
-    if (relicSet.defIgnore) result.defIgnore += relicSet.defIgnore;
+  // パーティーバフ
+  const members = [$('partyMember1')?.value, $('partyMember2')?.value, $('partyMember3')?.value];
+  members.forEach((mId, idx) => {
+    if (!mId || mId === 'none') return;
+    const char = HSR_DATA.characters[mId];
+    if (char && char.providedPartyBuffs) {
+      Object.entries(char.providedPartyBuffs).forEach(([bKey, buff]) => {
+        if ($(`partyBuff_${idx}_${bKey}`)?.checked) {
+          if (buff.atkPercent) result.atkPercent += buff.atkPercent;
+          if (buff.critRate) result.critRate += buff.critRate;
+          if (buff.critDmg) result.critDmg += buff.critDmg;
+          if (buff.damagePercent) result.damagePercent += buff.damagePercent;
+        }
+      });
+    }
+  });
+
+  // トンネル遺物
+  const relic = HSR_DATA.relicSets?.[$('relicSetSelect')?.value];
+  if (relic) {
+    if (relic.atkPercent) result.atkPercent += relic.atkPercent;
+    if (relic.critRate) result.critRate += relic.critRate;
+    if (relic.critDmg) result.critDmg += relic.critDmg;
+    if (relic.damagePercent) result.damagePercent += relic.damagePercent;
+    if (relic.defIgnore) result.defIgnore += relic.defIgnore;
   }
 
-  // 4. 次元界オーナメントセット効果
-  const ornamentSetId = $('ornamentSetSelect')?.value;
-  const ornamentSet = HSR_DATA?.ornamentSets?.[ornamentSetId];
-  if (ornamentSet) {
-    if (ornamentSet.atkPercent) result.atkPercent += ornamentSet.atkPercent;
-    if (ornamentSet.critRate) result.critRate += ornamentSet.critRate;
-    if (ornamentSet.critDmg) result.critDmg += ornamentSet.critDmg;
-    if (ornamentSet.damagePercent) result.damagePercent += ornamentSet.damagePercent;
+  // 次元界オーナメント
+  const ornament = HSR_DATA.ornamentSets?.[$('ornamentSetSelect')?.value];
+  if (ornament) {
+    if (ornament.atkPercent) result.atkPercent += ornament.atkPercent;
+    if (ornament.critRate) result.critRate += ornament.critRate;
+    if (ornament.critDmg) result.critDmg += ornament.critDmg;
+    if (ornament.damagePercent) result.damagePercent += ornament.damagePercent;
   }
 
   return result;
 }
 
-// 最終攻撃力計算
-function calculateAttackPower(allBuffs) {
-  const characterAtk = n('atk');
-  const lightConeId = $('lightConeSelect')?.value;
-  const coneLevel = $('coneLevel')?.value || 80;
-  const lightCone = HSR_DATA?.lightCones?.[coneLevel] || HSR_DATA?.lightCones?.[lightConeId];
-  
-  const lightConeAtk = lightCone?.statsByLevel?.[coneLevel]?.atk || 0;
-
-  const relicAtkPercent = p('relicAtk');
-  const buffAtkPercent = p('buffAtk');
-  const selfAtkPercent = (allBuffs.atkPercent || 0) / 100;
-  const flatAtk = n('flatAtk');
-
-  const baseAtk = characterAtk + lightConeAtk;
-  return baseAtk * (1 + relicAtkPercent + buffAtkPercent + selfAtkPercent) + flatAtk;
-}
-
-// メイン計算処理
 function calculate() {
   const charId = $('characterSelect')?.value;
   const attackId = $('attackSelect')?.value;
@@ -296,19 +288,19 @@ function calculate() {
 
   const allBuffs = collectAllBuffs(character);
 
-  const atk = calculateAttackPower(allBuffs);
-  const multiplier = n('multiplier') / 100;
-  const flatDamage = n('flatDamage');
-  
-  const baseDamage = atk * multiplier + flatDamage;
+  const charAtk = n('atk');
+  const coneLevel = $('coneLevel')?.value || 80;
+  const coneAtk = HSR_DATA.lightCones[$('lightConeSelect')?.value]?.statsByLevel?.[coneLevel]?.atk || 0;
+  const baseAtk = charAtk + coneAtk;
 
-  const relicCritRate = p('relicCritRate');
-  const relicCritDmg = p('relicCritDmg');
+  const totalAtk = baseAtk * (1 + p('relicAtk') + p('buffAtk') + (allBuffs.atkPercent / 100)) + n('flatAtk');
 
-  const totalCritRate = Math.min(1, Math.max(0, p('critRate') + p('buffCrit') + relicCritRate + (allBuffs.critRate / 100)));
-  const totalCritDmg = p('critDmg') + p('buffCritDmg') + relicCritDmg + (allBuffs.critDmg / 100);
+  const baseDamage = totalAtk * (n('multiplier') / 100) + n('flatDamage');
+
+  const totalCritRate = Math.min(1, Math.max(0, p('critRate') + p('buffCrit') + p('relicCritRate') + (allBuffs.critRate / 100)));
+  const totalCritDmg = p('critDmg') + p('buffCritDmg') + p('relicCritDmg') + (allBuffs.critDmg / 100);
+
   const mode = $('critMode')?.value || 'average';
-
   let crit = 1 + (totalCritRate * totalCritDmg);
   if (mode === 'crit') crit = 1 + totalCritDmg;
   if (mode === 'noncrit') crit = 1;
@@ -339,8 +331,7 @@ function calculate() {
   const breakdownEl = $('breakdown');
   if (breakdownEl) {
     const rows = [
-      ['最終攻撃力', atk],
-      ['スキル倍率 (%)', multiplier * 100],
+      ['最終攻撃力', totalAtk],
       ['基礎ダメージ', baseDamage],
       ['会心係数', crit],
       ['与ダメージ係数', damage],
@@ -386,6 +377,7 @@ function loadSettings() {
     else el.value = value;
   });
 
+  renderPartyBuffs();
   loadLightCone();
   calculate();
 }
