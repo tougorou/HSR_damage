@@ -10,7 +10,8 @@ function init() {
   const characterSelect = $('characterSelect');
   const lightConeSelect = $('lightConeSelect');
 
-  if (characterSelect) {
+  // キャラクターセレクトボックスの初期化
+  if (characterSelect && HSR_DATA.characters) {
     characterSelect.innerHTML = '';
     Object.entries(HSR_DATA.characters).forEach(([id, character]) => {
       const option = document.createElement('option');
@@ -21,7 +22,8 @@ function init() {
     characterSelect.addEventListener('change', loadCharacter);
   }
 
-  if (lightConeSelect) {
+  // 光円錐セレクトボックスの初期化
+  if (lightConeSelect && HSR_DATA.lightCones) {
     lightConeSelect.innerHTML = '';
     Object.entries(HSR_DATA.lightCones).forEach(([id, cone]) => {
       const option = document.createElement('option');
@@ -37,6 +39,7 @@ function init() {
   $('coneLevel')?.addEventListener('change', loadLightCone);
   $('coneSuper')?.addEventListener('change', loadLightCone);
 
+  // 全入力要素へのイベントリスナー登録
   document.querySelectorAll('input, select').forEach(element => {
     element.addEventListener('input', calculate);
     element.addEventListener('change', calculate);
@@ -46,38 +49,30 @@ function init() {
   if ($('loadBtn')) $('loadBtn').onclick = loadSettings;
   if ($('resetBtn')) $('resetBtn').onclick = () => location.reload();
 
+  // 初期ロード実行
   loadCharacter();
   loadLightCone();
 }
 
-// キャラクター選択時の処理
+// キャラクター選択時の自動セット
 function loadCharacter() {
   const charId = $('characterSelect')?.value;
-  const character = HSR_DATA.characters[charId];
+  const character = HSR_DATA?.characters?.[charId];
   if (!character) return;
 
   if ($('partyMain')) $('partyMain').textContent = character.name;
   if ($('resultCharacter')) $('resultCharacter').textContent = character.name;
   if ($('resultElement')) $('resultElement').textContent = character.element;
 
-  // 星魂（凸）セレクトボックスの生成
-  const eidolonSelect = $('eidolonSelect');
-  if (eidolonSelect && character.eidolons) {
-    eidolonSelect.innerHTML = '';
-    Object.entries(character.eidolons).forEach(([level, data]) => {
-      const option = document.createElement('option');
-      option.value = level;
-      option.textContent = data.name;
-      eidolonSelect.appendChild(option);
-    });
-  }
+  // 1. 星魂（凸）セレクトボックスの自動生成（強力なフォールバック付き）
+  renderEidolonOptions(character);
 
-  // 自己バフUIの動的生成
+  // 2. 自己バフUIの生成
   renderSelfBuffs(character);
 
-  // 攻撃スキル一覧の生成
+  // 3. 攻撃スキル一覧の生成
   const attackSelect = $('attackSelect');
-  if (attackSelect) {
+  if (attackSelect && character.attacks) {
     attackSelect.innerHTML = '';
     Object.entries(character.attacks).forEach(([id, attack]) => {
       const option = document.createElement('option');
@@ -90,6 +85,32 @@ function loadCharacter() {
 
   updateCharacterStats();
   updateAttackMultiplier();
+}
+
+// 星魂（凸）選択肢の生成処理
+function renderEidolonOptions(character) {
+  const eidolonSelect = $('eidolonSelect');
+  if (!eidolonSelect) return;
+
+  eidolonSelect.innerHTML = '';
+
+  // data.jsにeidolonsの定義がある場合
+  if (character.eidolons && Object.keys(character.eidolons).length > 0) {
+    Object.entries(character.eidolons).forEach(([level, data]) => {
+      const option = document.createElement('option');
+      option.value = level;
+      option.textContent = data.name || (level === '0' ? '無凸' : `${level}凸`);
+      eidolonSelect.appendChild(option);
+    });
+  } else {
+    // データがない場合のデフォルト（無凸〜6凸）生成
+    for (let i = 0; i <= 6; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = i === 0 ? '無凸' : `${i}凸`;
+      eidolonSelect.appendChild(option);
+    }
+  }
 }
 
 // 自己バフ用チェックボックスUIの動的描画
@@ -105,7 +126,7 @@ function renderSelfBuffs(character) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = `selfBuff_${key}`;
-    checkbox.checked = true; // デフォルトで有効
+    checkbox.checked = true;
     checkbox.addEventListener('change', calculate);
 
     label.appendChild(checkbox);
@@ -118,13 +139,13 @@ function renderSelfBuffs(character) {
 function updateCharacterStats() {
   const charId = $('characterSelect')?.value;
   const level = $('charLevel')?.value || 80;
-  const character = HSR_DATA.characters[charId];
+  const character = HSR_DATA?.characters?.[charId];
   if (!character) return;
 
-  const baseStats = character.statsByLevel[level] || character.statsByLevel[80];
+  const baseStats = character.statsByLevel?.[level] || character.statsByLevel?.[80] || { atk: 0, speed: 100 };
   const traceStats = character.traceStats || {};
 
-  if ($('atk')) $('atk').value = baseStats.atk;
+  if ($('atk')) $('atk').value = baseStats.atk || 0;
   if ($('critRate')) $('critRate').value = 5.0 + (traceStats.critRate || 0);
   if ($('critDmg')) $('critDmg').value = 50.0 + (traceStats.critDmg || 0);
   if ($('elementDmg')) $('elementDmg').value = traceStats.elementDmg || 0;
@@ -136,14 +157,14 @@ function updateCharacterStats() {
 function updateAttackMultiplier() {
   const charId = $('characterSelect')?.value;
   const attackId = $('attackSelect')?.value;
-  const character = HSR_DATA.characters[charId];
+  const character = HSR_DATA?.characters?.[charId];
   if (!character) return;
 
-  const attack = character.attacks[attackId];
+  const attack = character.attacks?.[attackId];
   if (!attack) return;
 
   const defaultTraceLevel = attack.type === 'basic' ? 6 : 10;
-  const multiplier = attack.multipliers[defaultTraceLevel] || attack.multipliers[1] || 100;
+  const multiplier = attack.multipliers?.[defaultTraceLevel] || attack.multipliers?.[1] || 100;
 
   if ($('multiplier')) $('multiplier').value = multiplier;
 
@@ -154,7 +175,7 @@ function updateAttackMultiplier() {
 function loadLightCone() {
   const coneId = $('lightConeSelect')?.value;
   const rank = $('coneSuper')?.value || 'S1';
-  const cone = HSR_DATA.lightCones[coneId];
+  const cone = HSR_DATA?.lightCones?.[coneId];
 
   if (!cone) return;
 
@@ -177,7 +198,7 @@ function collectSelfAndEidolonBuffs(character) {
     resPen: 0
   };
 
-  // 1. チェックされている自己バフの加算
+  // 自己バフの加算
   if (character.selfBuffs) {
     Object.entries(character.selfBuffs).forEach(([key, buff]) => {
       const cb = $(`selfBuff_${key}`);
@@ -191,7 +212,7 @@ function collectSelfAndEidolonBuffs(character) {
     });
   }
 
-  // 2. 星魂 (凸数) に応じたバフの累加
+  // 凸（星魂）効果の加算
   const eidolonLevel = Number($('eidolonSelect')?.value || 0);
   if (character.eidolons) {
     for (let i = 1; i <= eidolonLevel; i++) {
@@ -214,13 +235,13 @@ function calculateAttackPower(selfBuffs) {
   const characterAtk = n('atk');
   const lightConeId = $('lightConeSelect')?.value;
   const coneLevel = $('coneLevel')?.value || 80;
-  const lightCone = HSR_DATA.lightCones[lightConeId];
+  const lightCone = HSR_DATA?.lightCones?.[lightConeId];
   
   const lightConeAtk = lightCone?.statsByLevel?.[coneLevel]?.atk || 0;
 
   const relicAtk = p('relicAtk');
   const buffAtk = p('buffAtk');
-  const selfAtk = selfBuffs.atkPercent / 100;
+  const selfAtk = (selfBuffs.atkPercent || 0) / 100;
   const flatAtk = n('flatAtk');
 
   const baseAtk = characterAtk + lightConeAtk;
@@ -234,7 +255,6 @@ function calculate() {
   const character = HSR_DATA?.characters?.[charId];
   if (!character) return;
 
-  // 自己バフと星魂バフの合算値を取得
   const selfBuffs = collectSelfAndEidolonBuffs(character);
 
   const atk = calculateAttackPower(selfBuffs);
@@ -243,7 +263,6 @@ function calculate() {
   
   const baseDamage = atk * multiplier + flatDamage;
 
-  // 会心計算
   const totalCritRate = Math.min(1, Math.max(0, p('critRate') + p('buffCrit') + (selfBuffs.critRate / 100)));
   const totalCritDmg = p('critDmg') + p('buffCritDmg') + (selfBuffs.critDmg / 100);
   const mode = $('critMode')?.value || 'average';
@@ -252,16 +271,13 @@ function calculate() {
   if (mode === 'crit') crit = 1 + totalCritDmg;
   if (mode === 'noncrit') crit = 1;
 
-  // 与ダメージ補正
   const damage = 1 + p('elementDmg') + p('buffDmg') + (selfBuffs.damagePercent / 100);
 
-  // 防御補正 (防御無視/ダウンに自己バフ分を追加)
   const attackerLevel = n('charLevel') || 80;
   const enemyLevel = n('enemyLevel') || 95;
   const totalDefIgnore = Math.min(1, p('defDown') + p('defIgnore') + (selfBuffs.defIgnore / 100));
   const defense = (attackerLevel + 20) / ((attackerLevel + 20) + (enemyLevel + 20) * (1 - totalDefIgnore));
 
-  // 耐性補正 (耐性貫通に自己バフ分を追加)
   const totalResPen = p('resPen') + (selfBuffs.resPen / 100);
   const resistance = Math.min(2.0, Math.max(0.2, 1 - (p('resistance') - totalResPen)));
 
@@ -270,9 +286,8 @@ function calculate() {
 
   const finalDamage = baseDamage * crit * damage * defense * resistance * taken * broken;
 
-  // UI描画
   if ($('damage')) $('damage').textContent = Math.floor(finalDamage).toLocaleString('ja-JP');
-  if ($('resultAttack')) $('resultAttack').textContent = character.attacks[attackId]?.name || '-';
+  if ($('resultAttack')) $('resultAttack').textContent = character.attacks?.[attackId]?.name || '-';
 
   if ($('qCrit')) $('qCrit').textContent = crit.toFixed(4);
   if ($('qDmg')) $('qDmg').textContent = damage.toFixed(4);
