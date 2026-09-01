@@ -4,21 +4,15 @@
 
 const HSR_DATA = {
 
-  // ----------------------------------------
-  // キャラクター
-  // ----------------------------------------
   characters: {
 
     gilgamesh: {
       id: 'gilgamesh',
       name: 'ギルガメッシュ',
-
       element: '雷',
       path: '壊滅',
-
       level: 90,
 
-      // 基礎ステータス
       baseStats: {
         hp: 0,
         atk: 3742,
@@ -26,14 +20,12 @@ const HSR_DATA = {
         speed: 100
       },
 
-      // 入力画面に表示する初期値
       stats: {
         critRate: 100,
         critDmg: 150,
         elementDmg: 0
       },
 
-      // 攻撃
       attacks: {
 
         basic: {
@@ -70,10 +62,8 @@ const HSR_DATA = {
 
       },
 
-      // キャラクター固有バフ
       effects: [],
 
-      // 星魂
       eidolons: {
         E1: [],
         E2: [],
@@ -83,27 +73,27 @@ const HSR_DATA = {
         E6: []
       },
 
-      // 軌跡
       traces: {
         basic: 0,
         skill: 0,
         talent: 0,
         ult: 0
       }
+
     }
 
   },
 
 
-  // ----------------------------------------
+  // ========================================
   // 光円錐
-  // ----------------------------------------
+  // ========================================
+
   lightCones: {
 
     none: {
       id: 'none',
       name: '未装備',
-
       path: null,
 
       baseStats: {
@@ -115,74 +105,76 @@ const HSR_DATA = {
       effects: []
     },
 
-clara_signature: {
-  id: 'clara_signature',
-  name: 'かけがえのないもの',
 
-  path: '壊滅',
+    clara_signature: {
+      id: 'clara_signature',
+      name: 'かけがえのないもの',
+      path: '壊滅',
 
-  baseStats: {
-    hp: 1164,
-    atk: 582,
-    def: 396
+      baseStats: {
+        hp: 1164,
+        atk: 582,
+        def: 396
+      },
+
+      superimposition: {
+
+        S1: {
+          atkPercent: 24,
+          healPercent: 8,
+          damagePercent: 24
+        },
+
+        S2: {
+          atkPercent: 28,
+          healPercent: 9,
+          damagePercent: 28
+        },
+
+        S3: {
+          atkPercent: 32,
+          healPercent: 10,
+          damagePercent: 32
+        },
+
+        S4: {
+          atkPercent: 36,
+          healPercent: 11,
+          damagePercent: 36
+        },
+
+        S5: {
+          atkPercent: 40,
+          healPercent: 12,
+          damagePercent: 40
+        }
+
+      },
+
+      effects: [
+        {
+          id: 'family',
+          name: '家族',
+          type: 'conditional',
+          conditions: [
+            'enemyDefeated',
+            'ownerHit'
+          ],
+          duration: 'untilNextTurn',
+          stackable: false,
+          triggerLimit: 'oncePerTurn'
+        }
+      ]
+
+    }
+
   },
 
-  superimposition: {
-    S1: {
-      atkPercent: 24,
-      healPercent: 8,
-      damagePercent: 24
-    },
 
-    S2: {
-      atkPercent: 28,
-      healPercent: 9,
-      damagePercent: 28
-    },
+  // ========================================
+  // 遺物
+  // ========================================
 
-    S3: {
-      atkPercent: 32,
-      healPercent: 10,
-      damagePercent: 32
-    },
-
-    S4: {
-      atkPercent: 36,
-      healPercent: 11,
-      damagePercent: 36
-    },
-
-    S5: {
-      atkPercent: 40,
-      healPercent: 12,
-      damagePercent: 40
-    }
-  },
-
-  effects: [
-    {
-      id: 'family',
-      name: '家族',
-      type: 'conditional',
-
-      conditions: [
-        'enemyDefeated',
-        'ownerHit'
-      ],
-
-      duration: 'untilNextTurn',
-
-      stackable: false,
-
-      triggerLimit: 'oncePerTurn'
-    }
-  }
-},
-
-
-  // ----------------------------------------
-  // 遺物セット
-  // ----------------------------------------
   relicSets: {
 
     none: {
@@ -194,9 +186,10 @@ clara_signature: {
   },
 
 
-  // ----------------------------------------
+  // ========================================
   // オーナメント
-  // ----------------------------------------
+  // ========================================
+
   ornaments: {
 
     none: {
@@ -208,9 +201,10 @@ clara_signature: {
   },
 
 
-  // ----------------------------------------
+  // ========================================
   // バフ
-  // ----------------------------------------
+  // ========================================
+
   buffs: {
 
     none: {
@@ -221,15 +215,15 @@ clara_signature: {
   },
 
 
-  // ----------------------------------------
+  // ========================================
   // 敵
-  // ----------------------------------------
+  // ========================================
+
   enemies: {
 
     standard: {
       id: 'standard',
       name: '標準敵',
-
       level: 95,
 
       stats: {
@@ -239,7 +233,6 @@ clara_signature: {
       },
 
       weaknesses: [],
-
       effects: []
     }
 
