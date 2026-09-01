@@ -24,7 +24,7 @@
   <!-- メインコンテンツ -->
   <main class="app">
 
-    <!-- 左サイドバー：キャラ＆光円錐・バフ設定 -->
+    <!-- 左サイドバー：キャラ＆光円錐・スキル設定 -->
     <aside class="sidebar">
 
       <!-- キャラクター設定 -->
@@ -63,11 +63,11 @@
           使用スキル
           <select id="attackSelect"></select>
         </label>
-        <div class="row">
-          <label>
-  スキル倍率 (%)（合計倍率）
-  <input type="number" id="multiplier" value="100" step="0.1">
-</label>
+        <label>
+          スキル合計倍率 (%)
+          <input type="number" id="multiplier" value="100" step="0.1">
+        </label>
+        <label>
           固定加算ダメージ
           <input type="number" id="flatDamage" value="0">
         </label>
@@ -168,26 +168,26 @@
       </section>
     </div>
 
-    <!-- 右サイドバー：詳細ステータス・バフ・敵設定 -->
+    <!-- 右サイドバー：遺物・ステータス・敵設定 -->
     <aside class="rightbar">
 
-      <!-- ステータス設定 -->
+      <!-- 遺物設定（新規追加） -->
       <section class="card">
-        <h2>キャラクター基本ステータス</h2>
+        <h2>遺物・オーナメント設定</h2>
+        <label>
+          トンネル遺物 (4セット)
+          <select id="relicSetSelect"></select>
+        </label>
+        <label>
+          次元界オーナメント (2セット)
+          <select id="ornamentSetSelect"></select>
+        </label>
+        
+        <span style="font-size: 11px; color: var(--muted); display: block; margin: 10px 0 5px;">遺物サブステータス合計</span>
         <div class="row">
           <label>
-            基礎攻撃力
-            <input type="number" id="atk" value="0">
-          </label>
-          <label>
-            攻撃力% (遺物)
+            攻撃力%
             <input type="number" id="relicAtk" value="0" step="0.1">
-          </label>
-        </div>
-        <div class="row">
-          <label>
-            攻撃力バフ (%)
-            <input type="number" id="buffAtk" value="0" step="0.1">
           </label>
           <label>
             攻撃力実数値
@@ -197,20 +197,45 @@
         <div class="row">
           <label>
             会心率 (%)
-            <input type="number" id="critRate" value="5" step="0.1">
+            <input type="number" id="relicCritRate" value="0" step="0.1">
           </label>
           <label>
             会心ダメージ (%)
+            <input type="number" id="relicCritDmg" value="0" step="0.1">
+          </label>
+        </div>
+      </section>
+
+      <!-- ステータス設定 -->
+      <section class="card">
+        <h2>バフ・調整ステータス</h2>
+        <div class="row">
+          <label>
+            基礎攻撃力 (固定)
+            <input type="number" id="atk" value="0" readonly style="background: #141822; color: var(--muted);">
+          </label>
+          <label>
+            外部攻撃バフ (%)
+            <input type="number" id="buffAtk" value="0" step="0.1">
+          </label>
+        </div>
+        <div class="row">
+          <label>
+            基礎会心率 (%)
+            <input type="number" id="critRate" value="5" step="0.1">
+          </label>
+          <label>
+            基礎会心ダメ (%)
             <input type="number" id="critDmg" value="50" step="0.1">
           </label>
         </div>
         <div class="row">
           <label>
-            会心バフ (%)
+            外部会心率バフ (%)
             <input type="number" id="buffCrit" value="0" step="0.1">
           </label>
           <label>
-            会心ダメバフ (%)
+            外部会心ダメバフ (%)
             <input type="number" id="buffCritDmg" value="0" step="0.1">
           </label>
         </div>
@@ -220,7 +245,7 @@
             <input type="number" id="elementDmg" value="0" step="0.1">
           </label>
           <label>
-            与ダメージバフ (%)
+            外部与ダメバフ (%)
             <input type="number" id="buffDmg" value="0" step="0.1">
           </label>
         </div>
