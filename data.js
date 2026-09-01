@@ -5,237 +5,77 @@
 const HSR_DATA = {
 
   characters: {
-
     gilgamesh: {
       id: 'gilgamesh',
       name: 'ギルガメッシュ',
       element: '雷',
       path: '壊滅',
-      level: 90,
-
-      baseStats: {
-        hp: 0,
-        atk: 3742,
-        def: 0,
-        speed: 100
+      
+      // レベルごとの基礎ステータス (Lv1〜Lv80)
+      statsByLevel: {
+        80: { hp: 1203, atk: 698, def: 441, speed: 102 },
+        70: { hp: 1050, atk: 610, def: 385, speed: 102 }
       },
 
-      stats: {
-        critRate: 100,
-        critDmg: 150,
-        elementDmg: 0
+      // 軌跡・ステータスボーナス（キャラクター固有のステータス上昇）
+      traceStats: {
+        critRate: 12.0,   // 軌跡合計会心率 %
+        critDmg: 0.0,
+        elementDmg: 14.4  // 属性与ダメ %
       },
 
+      // 攻撃スキルの軌跡Lv別倍率 (%)
       attacks: {
-
         basic: {
           id: 'basic',
           name: '通常攻撃',
           type: 'basic',
-          multiplier: 100,
-          damageType: 'direct'
+          multipliers: { 1: 50, 6: 100, 7: 110 } // 軌跡Lv: 倍率%
         },
-
         skill: {
           id: 'skill',
           name: '戦闘スキル',
           type: 'skill',
-          multiplier: 200,
-          damageType: 'direct'
+          multipliers: { 1: 100, 10: 200, 12: 220 }
         },
-
         ult: {
           id: 'ult',
           name: '必殺技',
           type: 'ult',
-          multiplier: 300,
-          damageType: 'direct'
+          multipliers: { 1: 150, 10: 300, 12: 330 }
         },
-
         talent: {
           id: 'talent',
           name: '天賦',
           type: 'talent',
-          multiplier: 150,
-          damageType: 'direct'
+          multipliers: { 1: 75, 10: 150, 12: 165 }
         }
-
-      },
-
-      effects: [],
-
-      eidolons: {
-        E1: [],
-        E2: [],
-        E3: [],
-        E4: [],
-        E5: [],
-        E6: []
-      },
-
-      traces: {
-        basic: 0,
-        skill: 0,
-        talent: 0,
-        ult: 0
       }
-
     }
-
   },
 
-
-  // ========================================
-  // 光円錐
-  // ========================================
-
   lightCones: {
-
     none: {
       id: 'none',
       name: '未装備',
-      path: null,
-
-      baseStats: {
-        hp: 0,
-        atk: 0,
-        def: 0
-      },
-
-      effects: []
+      statsByLevel: { 80: { hp: 0, atk: 0, def: 0 } },
+      superimposition: {}
     },
-
-
     clara_signature: {
       id: 'clara_signature',
       name: 'かけがえのないもの',
       path: '壊滅',
-
-      baseStats: {
-        hp: 1164,
-        atk: 582,
-        def: 396
+      statsByLevel: {
+        80: { hp: 1164, atk: 582, def: 396 },
+        70: { hp: 1018, atk: 509, def: 346 }
       },
-
       superimposition: {
-
-        S1: {
-          atkPercent: 24,
-          healPercent: 8,
-          damagePercent: 24
-        },
-
-        S2: {
-          atkPercent: 28,
-          healPercent: 9,
-          damagePercent: 28
-        },
-
-        S3: {
-          atkPercent: 32,
-          healPercent: 10,
-          damagePercent: 32
-        },
-
-        S4: {
-          atkPercent: 36,
-          healPercent: 11,
-          damagePercent: 36
-        },
-
-        S5: {
-          atkPercent: 40,
-          healPercent: 12,
-          damagePercent: 40
-        }
-
-      },
-
-      effects: [
-        {
-          id: 'family',
-          name: '家族',
-          type: 'conditional',
-          conditions: [
-            'enemyDefeated',
-            'ownerHit'
-          ],
-          duration: 'untilNextTurn',
-          stackable: false,
-          triggerLimit: 'oncePerTurn'
-        }
-      ]
-
+        S1: { atkPercent: 24, damagePercent: 24 },
+        S2: { atkPercent: 28, damagePercent: 28 },
+        S3: { atkPercent: 32, damagePercent: 32 },
+        S4: { atkPercent: 36, damagePercent: 36 },
+        S5: { atkPercent: 40, damagePercent: 40 }
+      }
     }
-
-  },
-
-
-  // ========================================
-  // 遺物
-  // ========================================
-
-  relicSets: {
-
-    none: {
-      id: 'none',
-      name: '未装備',
-      effects: []
-    }
-
-  },
-
-
-  // ========================================
-  // オーナメント
-  // ========================================
-
-  ornaments: {
-
-    none: {
-      id: 'none',
-      name: '未装備',
-      effects: []
-    }
-
-  },
-
-
-  // ========================================
-  // バフ
-  // ========================================
-
-  buffs: {
-
-    none: {
-      id: 'none',
-      name: 'なし'
-    }
-
-  },
-
-
-  // ========================================
-  // 敵
-  // ========================================
-
-  enemies: {
-
-    standard: {
-      id: 'standard',
-      name: '標準敵',
-      level: 95,
-
-      stats: {
-        hp: 0,
-        def: 0,
-        resistance: 0
-      },
-
-      weaknesses: [],
-      effects: []
-    }
-
   }
-
 };
