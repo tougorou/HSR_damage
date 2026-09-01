@@ -10,7 +10,6 @@ function init() {
   const characterSelect = $('characterSelect');
   const lightConeSelect = $('lightConeSelect');
 
-  // キャラクターセレクトボックスの初期化
   if (characterSelect && HSR_DATA.characters) {
     characterSelect.innerHTML = '';
     Object.entries(HSR_DATA.characters).forEach(([id, character]) => {
@@ -22,7 +21,6 @@ function init() {
     characterSelect.addEventListener('change', loadCharacter);
   }
 
-  // 光円錐セレクトボックスの初期化
   if (lightConeSelect && HSR_DATA.lightCones) {
     lightConeSelect.innerHTML = '';
     Object.entries(HSR_DATA.lightCones).forEach(([id, cone]) => {
@@ -39,7 +37,6 @@ function init() {
   $('coneLevel')?.addEventListener('change', loadLightCone);
   $('coneSuper')?.addEventListener('change', loadLightCone);
 
-  // 全入力要素へのイベントリスナー登録
   document.querySelectorAll('input, select').forEach(element => {
     element.addEventListener('input', calculate);
     element.addEventListener('change', calculate);
@@ -49,12 +46,11 @@ function init() {
   if ($('loadBtn')) $('loadBtn').onclick = loadSettings;
   if ($('resetBtn')) $('resetBtn').onclick = () => location.reload();
 
-  // 初期ロード実行
   loadCharacter();
   loadLightCone();
 }
 
-// キャラクター選択時の自動セット
+// キャラクターロード
 function loadCharacter() {
   const charId = $('characterSelect')?.value;
   const character = HSR_DATA?.characters?.[charId];
@@ -64,13 +60,9 @@ function loadCharacter() {
   if ($('resultCharacter')) $('resultCharacter').textContent = character.name;
   if ($('resultElement')) $('resultElement').textContent = character.element;
 
-  // 1. 星魂（凸）セレクトボックスの自動生成（強力なフォールバック付き）
   renderEidolonOptions(character);
-
-  // 2. 自己バフUIの生成
   renderSelfBuffs(character);
 
-  // 3. 攻撃スキル一覧の生成
   const attackSelect = $('attackSelect');
   if (attackSelect && character.attacks) {
     attackSelect.innerHTML = '';
@@ -87,14 +79,13 @@ function loadCharacter() {
   updateAttackMultiplier();
 }
 
-// 星魂（凸）選択肢の生成処理
+// 星魂（凸）ドロップダウン生成
 function renderEidolonOptions(character) {
   const eidolonSelect = $('eidolonSelect');
   if (!eidolonSelect) return;
 
   eidolonSelect.innerHTML = '';
 
-  // data.jsにeidolonsの定義がある場合
   if (character.eidolons && Object.keys(character.eidolons).length > 0) {
     Object.entries(character.eidolons).forEach(([level, data]) => {
       const option = document.createElement('option');
@@ -103,7 +94,6 @@ function renderEidolonOptions(character) {
       eidolonSelect.appendChild(option);
     });
   } else {
-    // データがない場合のデフォルト（無凸〜6凸）生成
     for (let i = 0; i <= 6; i++) {
       const option = document.createElement('option');
       option.value = i;
@@ -113,7 +103,7 @@ function renderEidolonOptions(character) {
   }
 }
 
-// 自己バフ用チェックボックスUIの動的描画
+// 自己バフUI動的描画
 function renderSelfBuffs(character) {
   const container = $('selfBuffsContainer');
   if (!container) return;
@@ -153,7 +143,7 @@ function updateCharacterStats() {
   calculate();
 }
 
-// 攻撃倍率の自動更新
+// スキル倍率更新
 function updateAttackMultiplier() {
   const charId = $('characterSelect')?.value;
   const attackId = $('attackSelect')?.value;
@@ -171,7 +161,7 @@ function updateAttackMultiplier() {
   calculate();
 }
 
-// 光円錐設定のロード
+// 光円錐ロード
 function loadLightCone() {
   const coneId = $('lightConeSelect')?.value;
   const rank = $('coneSuper')?.value || 'S1';
@@ -187,7 +177,7 @@ function loadLightCone() {
   calculate();
 }
 
-// 自己バフおよび凸効果の合算計算
+// 自己バフ・星魂（凸）効果合算
 function collectSelfAndEidolonBuffs(character) {
   const result = {
     atkPercent: 0,
@@ -198,7 +188,6 @@ function collectSelfAndEidolonBuffs(character) {
     resPen: 0
   };
 
-  // 自己バフの加算
   if (character.selfBuffs) {
     Object.entries(character.selfBuffs).forEach(([key, buff]) => {
       const cb = $(`selfBuff_${key}`);
@@ -212,7 +201,6 @@ function collectSelfAndEidolonBuffs(character) {
     });
   }
 
-  // 凸（星魂）効果の加算
   const eidolonLevel = Number($('eidolonSelect')?.value || 0);
   if (character.eidolons) {
     for (let i = 1; i <= eidolonLevel; i++) {
@@ -284,6 +272,7 @@ function calculate() {
   const taken = 1 + p('takenUp');
   const broken = $('broken')?.value === '1' ? 1.0 : (Number($('broken')?.value) || 0.9);
 
+  // 合計ダメージ（ヒット数乗算なしの一括計算）
   const finalDamage = baseDamage * crit * damage * defense * resistance * taken * broken;
 
   if ($('damage')) $('damage').textContent = Math.floor(finalDamage).toLocaleString('ja-JP');
