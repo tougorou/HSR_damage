@@ -10,20 +10,17 @@ const HSR_DATA = {
       element: '雷',
       path: '壊滅',
       
-      // レベルごとの基礎ステータス (Lv80)
       statsByLevel: {
         80: { hp: 1203, atk: 698, def: 441, speed: 102 },
         70: { hp: 1050, atk: 610, def: 385, speed: 102 }
       },
 
-      // 軌跡ボーナス (自動加算)
       traceStats: {
         critRate: 12.0,   // 軌跡合計会心率 %
         critDmg: 0.0,
         elementDmg: 14.4  // 雷属性与ダメージ %
       },
 
-      // 自身が発動可能な自己バフ定義
       selfBuffs: {
         skillAtkBuff: { name: '戦闘スキル：攻撃力UP', atkPercent: 40.0 },
         talentCritDmg: { name: '天賦：会心ダメージUP', critDmg: 35.0 },
@@ -31,16 +28,16 @@ const HSR_DATA = {
         ebaDmgBuff: { name: '強化通常：与ダメージUP', damagePercent: 45.0 }
       },
 
-      // 星魂 (凸効果)
       eidolons: {
         0: { name: '無凸' },
         1: { name: '1凸: 王の宝物庫', critRate: 10.0, defIgnore: 12.0 },
         2: { name: '2凸: 天の鎖', resPen: 15.0 },
+        3: { name: '3凸: 万象の観照' },
         4: { name: '4凸: 英雄の領域', damagePercent: 30.0 },
+        5: { name: '5凸: 原初の法則' },
         6: { name: '6凸: 開天辟地', critDmg: 50.0, defIgnore: 20.0 }
       },
 
-      // 攻撃スキルの倍率テーブル (%)
       attacks: {
         basic: {
           id: 'basic',
@@ -92,5 +89,25 @@ const HSR_DATA = {
         S5: { atkPercent: 40, damagePercent: 40, critDmg: 32 }
       }
     }
+  },
+
+  // トンネル遺物セット効果
+  relicSets: {
+    none: { id: 'none', name: 'なし', atkPercent: 0, critRate: 0, critDmg: 0, damagePercent: 0, defIgnore: 0 },
+    musketeer: { id: 'musketeer', name: '草穂ガンマン (4)', atkPercent: 12, damagePercent: 10 },
+    banditry: { id: 'banditry', name: '荒地を彷徨う廃土客 (4)', damagePercent: 10, critRate: 10, critDmg: 20 },
+    prisoner: { id: 'prisoner', name: '深牢に繋がれる囚人 (4)', atkPercent: 12, defIgnore: 18 },
+    pioneer: { id: 'pioneer', name: '死水に潜る先駆者 (4)', damagePercent: 12, critRate: 8, critDmg: 24 },
+    sizzling: { id: 'sizzling', name: 'バンド (4)', damagePercent: 10, atkPercent: 20 }
+  },
+
+  // 次元界オーナメントセット効果
+  ornamentSets: {
+    none: { id: 'none', name: 'なし', atkPercent: 0, critRate: 0, critDmg: 0, damagePercent: 0 },
+    salsotto: { id: 'salsotto', name: '自転の自認サルソット (2)', critRate: 8, damagePercent: 15 },
+    arena: { id: 'arena', name: '星々の競技場 (2)', critRate: 8, damagePercent: 20 },
+    glamoth: { id: 'glamoth', name: '蒼穹戦線グラモト (2)', atkPercent: 12, damagePercent: 18 },
+    keel: { id: 'keel', name: '折れた竜骨 (2)', critDmg: 10 },
+    space: { id: 'space', name: '宇宙封印ステーション (2)', atkPercent: 24 }
   }
 };
