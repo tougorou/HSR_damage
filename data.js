@@ -58,28 +58,31 @@ const HSR_DATA = {
       }
     },
 
-    blade: {
-      id: 'blade',
-      name: '千子村正・刃',
+    // 修正：千冶・刃（通常刃とは異なる独自性能）
+    senji_blade: {
+      id: 'senji_blade',
+      name: '千冶・刃',
       element: '風',
       path: '壊滅',
       statsByLevel: {
-        80: { hp: 1358, atk: 543, def: 485, speed: 97 },
-        70: { hp: 1180, atk: 470, def: 420, speed: 97 }
+        80: { hp: 1419, atk: 601, def: 485, speed: 97 },
+        70: { hp: 1230, atk: 520, def: 420, speed: 97 }
       },
-      traceStats: { critRate: 12.0, hpPercent: 18.0 },
+      traceStats: { critRate: 12.0, elementDmg: 14.4 },
       selfBuffs: {
-        hellscape: { name: '地獄変（与ダメUP）', damagePercent: 40.0 }
+        senjiState: { name: '千冶展開（与ダメUP・会心ダメージUP）', damagePercent: 45.0, critDmg: 30.0 }
       },
       eidolons: {
         0: { name: '無凸' },
-        1: { name: '1凸', damagePercent: 15.0 },
-        2: { name: '2凸', critRate: 15.0 }
+        1: { name: '1凸: 必殺技ダメージUP', damagePercent: 25.0 },
+        2: { name: '2凸: 会心率UP', critRate: 15.0 },
+        6: { name: '6凸: 耐性貫通・防御無視追加', resPen: 20.0, defIgnore: 18.0 }
       },
       attacks: {
         basic: { id: 'basic', name: '通常攻撃', type: 'basic', multipliers: { 1: 50, 6: 100 } },
-        enhancedBasic: { id: 'enhancedBasic', name: '強化通常（支離剣）', type: 'basic', multipliers: { 1: 50, 6: 100 } },
-        ult: { id: 'ult', name: '必殺技（無間剣樹）', type: 'ult', multipliers: { 1: 120, 10: 240 } }
+        enhancedBasic: { id: 'enhancedBasic', name: '強化通常攻撃（千冶一閃）', type: 'basic', multipliers: { 1: 130, 6: 260 } },
+        skill: { id: 'skill', name: '戦闘スキル', type: 'skill', multipliers: { 1: 100, 10: 200 } },
+        ult: { id: 'ult', name: '必殺技（無銘・千刃屠殺）', type: 'ult', multipliers: { 1: 210, 10: 420 } }
       }
     },
 
@@ -146,7 +149,7 @@ const HSR_DATA = {
     },
     unreachable_side: {
       id: 'unreachable_side',
-      name: '着けない彼岸（刃モチーフ）',
+      name: '着けない彼岸',
       statsByLevel: {
         80: { hp: 1270, atk: 582, def: 330 },
         70: { hp: 1110, atk: 509, def: 288 }
@@ -161,7 +164,7 @@ const HSR_DATA = {
     },
     night_of_fright: {
       id: 'night_of_fright',
-      name: '驚魂の夜（フォフォモチーフ）',
+      name: '驚魂の夜',
       statsByLevel: {
         80: { hp: 1270, atk: 476, def: 529 },
         70: { hp: 1110, atk: 416, def: 462 }
