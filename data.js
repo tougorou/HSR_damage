@@ -203,4 +203,4 @@ ornamentSets: {
     salsotto: { id: 'salsotto', name: '自転が止まったサルソット (2)', critRate: 8, damagePercent: 15 },
     astronomical_institute: { id: 'astronomical_institute', name: '宇宙生命科学研究院 (2)', atkPercent: 12, damagePercent: 12 },
     bone_collector: { id: 'bone_collector', name: '静謐な拾骨地 (2)', critDmg: 16 }
-  }
+},
