@@ -6,510 +6,260 @@ const $ = id => document.getElementById(id);
 
 const n = id => {
   const el = $(id);
-  if (!el) return 0;
-  return Number(el.value) || 0;
+  return el ? (Number(el.value) || 0) : 0;
 };
 
 const p = id => n(id) / 100;
-
 
 // ========================================
 // 初期化
 // ========================================
 
 function init() {
-
   const characterSelect = $('characterSelect');
-
-  Object.entries(HSR_DATA.characters).forEach(([id, character]) => {
-
-    const option = document.createElement('option');
-
-    option.value = id;
-    option.textContent = character.name;
-
-    characterSelect.appendChild(option);
-
-  });
-
-
   const lightConeSelect = $('lightConeSelect');
 
-  Object.entries(HSR_DATA.lightCones).forEach(([id, cone]) => {
+  if (characterSelect) {
+    characterSelect.innerHTML = '';
+    Object.entries(HSR_DATA.characters).forEach(([id, character]) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = character.name;
+      characterSelect.appendChild(option);
+    });
+    characterSelect.addEventListener('change', loadCharacter);
+  }
 
-    const option = document.createElement('option');
+  if (lightConeSelect) {
+    lightConeSelect.innerHTML = '';
+    Object.entries(HSR_DATA.lightCones).forEach(([id, cone]) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = cone.name;
+      lightConeSelect.appendChild(option);
+    });
+    lightConeSelect.addEventListener('change', () => {
+      applyLightConeBuffs();
+      calculate();
+    });
+  }
 
-    option.value = id;
-    option.textContent = cone.name;
+  const superSelect = $('coneSuper');
+  if (superSelect) {
+    superSelect.addEventListener('change', () => {
+      applyLightConeBuffs();
+      calculate();
+    });
+  }
 
-    lightConeSelect.appendChild(option);
-
+  document.querySelectorAll('input, select').forEach(element => {
+    element.addEventListener('input', calculate);
+    element.addEventListener('change', calculate);
   });
 
-
-  characterSelect.addEventListener('change', loadCharacter);
-
-  lightConeSelect.addEventListener('change', calculate);
-
-
-  document
-    .querySelectorAll('input, select')
-    .forEach(element => {
-
-      element.addEventListener('input', calculate);
-      element.addEventListener('change', calculate);
-
-    });
-
-
-  $('saveBtn').onclick = saveSettings;
-
-  $('loadBtn').onclick = loadSettings;
-
-  $('resetBtn').onclick = () => location.reload();
-
+  if ($('saveBtn')) $('saveBtn').onclick = saveSettings;
+  if ($('loadBtn')) $('loadBtn').onclick = loadSettings;
+  if ($('resetBtn')) $('resetBtn').onclick = () => location.reload();
 
   loadCharacter();
-
 }
-
 
 // ========================================
 // キャラクター読み込み
 // ========================================
 
 function loadCharacter() {
-
-  const characterId = $('characterSelect').value;
-
-  const character = HSR_DATA.characters[characterId];
-
+  const charId = $('characterSelect')?.value;
+  const character = HSR_DATA.characters[charId];
   if (!character) return;
 
+  if ($('charLevel')) $('charLevel').value = character.level || 80;
+  if ($('atk')) $('atk').value = character.baseStats.atk || 0;
+  if ($('critRate')) $('critRate').value = character.stats.critRate || 5;
+  if ($('critDmg')) $('critDmg').value = character.stats.critDmg || 50;
+  if ($('speed')) $('speed').value = character.baseStats.speed || 100;
+  if ($('elementDmg')) $('elementDmg').value = character.stats.elementDmg || 0;
 
-  // 基礎ステータス
-
-  $('charLevel').value = character.level;
-
-  $('atk').value = character.baseStats.atk;
-
-  $('critRate').value = character.stats.critRate;
-
-  $('critDmg').value = character.stats.critDmg;
-
-  $('speed').value = character.baseStats.speed;
-
-  $('elementDmg').value = character.stats.elementDmg;
-
-
-  // キャラクター表示
-
-  $('partyMain').textContent = character.name;
-
-  $('resultCharacter').textContent = character.name;
-
-  $('resultElement').textContent = character.element;
-
-
-  // 攻撃一覧
+  if ($('partyMain')) $('partyMain').textContent = character.name;
+  if ($('resultCharacter')) $('resultCharacter').textContent = character.name;
+  if ($('resultElement')) $('resultElement').textContent = character.element;
 
   const attackSelect = $('attackSelect');
-
-  attackSelect.innerHTML = '';
-
-
-  Object.entries(character.attacks).forEach(([id, attack]) => {
-
-    const option = document.createElement('option');
-
-    option.value = id;
-
-    option.textContent = attack.name;
-
-    attackSelect.appendChild(option);
-
-  });
-
-
-  attackSelect.onchange = loadAttack;
+  if (attackSelect) {
+    attackSelect.innerHTML = '';
+    Object.entries(character.attacks).forEach(([id, attack]) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = attack.name;
+      attackSelect.appendChild(option);
+    });
+    attackSelect.onchange = loadAttack;
+  }
 
   loadAttack();
-
 }
 
+// ========================================
+// 光円錐バフの自動反映
+// ========================================
+
+function applyLightConeBuffs() {
+  const coneId = $('lightConeSelect')?.value;
+  const rank = $('coneSuper')?.value || 'S1';
+  const cone = HSR_DATA.lightCones[coneId];
+
+  if (!cone || !cone.superimposition || !cone.superimposition[rank]) return;
+
+  const stats = cone.superimposition[rank];
+  
+  // 装備時の自動バフ反映（手動入力バフ欄を更新）
+  if (stats.atkPercent !== undefined && $('buffAtk')) {
+    $('buffAtk').value = stats.atkPercent;
+  }
+  if (stats.damagePercent !== undefined && $('buffDmg')) {
+    $('buffDmg').value = stats.damagePercent;
+  }
+}
 
 // ========================================
-// 攻撃読み込み
+// 攻撃スキル読み込み
 // ========================================
 
 function loadAttack() {
-
-  const character =
-    HSR_DATA.characters[$('characterSelect').value];
-
+  const charId = $('characterSelect')?.value;
+  const attackId = $('attackSelect')?.value;
+  const character = HSR_DATA.characters[charId];
   if (!character) return;
 
-
-  const attack =
-    character.attacks[$('attackSelect').value];
-
+  const attack = character.attacks[attackId];
   if (!attack) return;
 
-
-  $('multiplier').value = attack.multiplier;
-
+  if ($('multiplier')) $('multiplier').value = attack.multiplier;
   calculate();
-
 }
 
-
 // ========================================
-// 攻撃力計算
+// ステータス & 係数計算
 // ========================================
 
 function calculateAttackPower() {
-
   const characterAtk = n('atk');
-
-  const lightConeId = $('lightConeSelect').value;
-
-  const lightCone =
-    HSR_DATA.lightCones[lightConeId];
-
-  const lightConeAtk =
-    lightCone?.baseStats?.atk || 0;
+  const lightConeId = $('lightConeSelect')?.value;
+  const lightCone = HSR_DATA.lightCones[lightConeId];
+  const lightConeAtk = lightCone?.baseStats?.atk || 0;
 
   const relicAtk = p('relicAtk');
-
   const buffAtk = p('buffAtk');
+  const flatAtk = n('flatAtk');
 
-
-  // キャラクター基礎攻撃力
-  // ＋ 光円錐基礎攻撃力
-  const baseAtk =
-    characterAtk + lightConeAtk;
-
-
-  // 攻撃力%バフ
-  return baseAtk *
-    (1 + relicAtk + buffAtk);
-
+  const baseAtk = characterAtk + lightConeAtk;
+  return baseAtk * (1 + relicAtk + buffAtk) + flatAtk;
 }
-
-
-// ========================================
-// 会心係数
-// ========================================
 
 function calculateCritMultiplier() {
+  const critRate = Math.min(1, Math.max(0, p('critRate') + p('buffCrit')));
+  const critDamage = p('critDmg') + p('buffCritDmg');
+  const mode = $('critMode')?.value || 'average';
 
-  const critRate =
-    Math.min(
-      1,
-      p('critRate') + p('buffCrit')
-    );
-
-
-  const critDamage =
-    p('critDmg') + p('buffCritDmg');
-
-
-  const mode = $('critMode').value;
-
-
-  // 会心
-
-  if (mode === 'crit') {
-
-    return 1 + critDamage;
-
-  }
-
-
-  // 非会心
-
-  if (mode === 'noncrit') {
-
-    return 1;
-
-  }
-
-
-  // 期待値
-
-  if (mode === 'average') {
-
-    return 1 + critRate * critDamage;
-
-  }
-
-
-  return 1;
-
+  if (mode === 'crit') return 1 + critDamage;
+  if (mode === 'noncrit') return 1;
+  return 1 + (critRate * critDamage);
 }
-
-
-// ========================================
-// 与ダメージ係数
-// ========================================
 
 function calculateDamageMultiplier() {
-
-  return 1
-    + p('elementDmg')
-    + p('buffDmg');
-
+  return 1 + p('elementDmg') + p('buffDmg');
 }
-
-
-// ========================================
-// 防御係数
-// ========================================
 
 function calculateDefenseMultiplier() {
+  const attackerLevel = n('charLevel') || 80;
+  const enemyLevel = n('enemyLevel') || 80;
 
-  const enemyLevel = n('enemyLevel');
+  const defReduction = Math.min(1, p('defDown') + p('defIgnore'));
+  const defenderDefense = (enemyLevel + 20) * (1 - defReduction);
 
-  const enemyDef = n('enemyDef');
-
-
-  const defenseDown = p('defDown');
-
-  const defenseIgnore = p('defIgnore');
-
-
-  const effectiveDefense =
-    Math.max(
-      0,
-      enemyDef *
-      (1 - defenseDown) *
-      (1 - defenseIgnore)
-    );
-
-
-  /*
-   * 崩壊：スターレイルの基本防御係数
-   *
-   * 係数 =
-   * (攻撃者Lv + 20)
-   * /
-   * ((攻撃者Lv + 20) + 敵防御力)
-   *
-   * 現段階では敵Lvを使用した簡易式。
-   */
-
-  const attackerLevel = n('charLevel');
-
-
-  if (effectiveDefense <= 0) {
-    return 1;
-  }
-
-
-  return (
-    (attackerLevel + 20) /
-    (
-      attackerLevel +
-      20 +
-      effectiveDefense
-    )
-  );
-
+  return (attackerLevel + 20) / ((attackerLevel + 20) + defenderDefense);
 }
-
-
-// ========================================
-// 耐性係数
-// ========================================
 
 function calculateResistanceMultiplier() {
+  const baseRes = p('resistance');
+  const resPen = p('resPen');
+  const effectiveRes = baseRes - resPen;
 
-  const resistance = p('resistance');
-
-
-  return Math.max(
-    0,
-    1 - resistance
-  );
-
+  return Math.min(2.0, Math.max(0.2, 1 - effectiveRes));
 }
-
-
-// ========================================
-// 被ダメージ係数
-// ========================================
 
 function calculateTakenMultiplier() {
-
   return 1 + p('takenUp');
-
 }
-
-
-// ========================================
-// 弱点撃破係数
-// ========================================
 
 function calculateBrokenMultiplier() {
-
-  const broken = $('broken').value;
-
-
-  if (broken === '1') {
-    return 1;
-  }
-
-
-  return 0.9;
-
+  const broken = $('broken')?.value;
+  return broken === '1' ? 1.0 : (Number(broken) || 0.9);
 }
 
-
 // ========================================
-// メイン計算
+// メインダメージ計算
 // ========================================
 
 function calculate() {
-
-  const character =
-    HSR_DATA.characters[$('characterSelect').value];
-
+  const charId = $('characterSelect')?.value;
+  const attackId = $('attackSelect')?.value;
+  const character = HSR_DATA?.characters?.[charId];
   if (!character) return;
 
-
-  const attack =
-    character.attacks[$('attackSelect').value];
-
+  const attack = character.attacks?.[attackId];
   if (!attack) return;
 
+  const atk = calculateAttackPower();
+  const multiplier = n('multiplier') / 100;
+  const flatDamage = n('flatDamage');
+  
+  const baseDamage = atk * multiplier + flatDamage;
 
-  // 攻撃力
+  const crit = calculateCritMultiplier();
+  const damage = calculateDamageMultiplier();
+  const defense = calculateDefenseMultiplier();
+  const resistance = calculateResistanceMultiplier();
+  const taken = calculateTakenMultiplier();
+  const broken = calculateBrokenMultiplier();
 
-  const atk =
-    calculateAttackPower();
+  const hits = Math.max(1, n('hits'));
+  const singleHitDamage = baseDamage * crit * damage * defense * resistance * taken * broken;
+  const finalDamage = singleHitDamage * hits;
 
+  if ($('damage')) {
+    $('damage').textContent = Math.floor(finalDamage).toLocaleString('ja-JP');
+  }
+  if ($('resultAttack')) {
+    $('resultAttack').textContent = attack.name;
+  }
 
-  // 倍率
+  if ($('qCrit')) $('qCrit').textContent = crit.toFixed(4);
+  if ($('qDmg')) $('qDmg').textContent = damage.toFixed(4);
+  if ($('qDef')) $('qDef').textContent = defense.toFixed(4);
+  if ($('qRes')) $('qRes').textContent = resistance.toFixed(4);
 
-  const multiplier =
-    n('multiplier') / 100;
+  const breakdownEl = $('breakdown');
+  if (breakdownEl) {
+    const rows = [
+      ['最終攻撃力', atk],
+      ['スキル倍率', multiplier * 100],
+      ['基礎ダメージ', baseDamage],
+      ['会心係数', crit],
+      ['与ダメージ係数', damage],
+      ['防御係数', defense],
+      ['耐性係数', resistance],
+      ['被ダメージ係数', taken],
+      ['撃破係数', broken],
+      ['合計ダメージ', finalDamage]
+    ];
 
-
-  // 固定加算
-
-  const flatDamage =
-    n('flatDamage');
-
-
-  // 基礎ダメージ
-
-  const baseDamage =
-    atk * multiplier +
-    flatDamage;
-
-
-  // 各種係数
-
-  const crit =
-    calculateCritMultiplier();
-
-  const damage =
-    calculateDamageMultiplier();
-
-  const defense =
-    calculateDefenseMultiplier();
-
-  const resistance =
-    calculateResistanceMultiplier();
-
-  const taken =
-    calculateTakenMultiplier();
-
-  const broken =
-    calculateBrokenMultiplier();
-
-
-  // 最終ダメージ
-
-  const finalDamage =
-    baseDamage *
-    crit *
-    damage *
-    defense *
-    resistance *
-    taken *
-    broken;
-
-
-  // 表示
-
-  $('damage').textContent =
-    Math.floor(finalDamage)
-      .toLocaleString('ja-JP');
-
-
-  $('resultAttack').textContent =
-    attack.name;
-
-
-  $('qCrit').textContent =
-    crit.toFixed(4);
-
-  $('qDmg').textContent =
-    damage.toFixed(4);
-
-  $('qDef').textContent =
-    defense.toFixed(4);
-
-  $('qRes').textContent =
-    resistance.toFixed(4);
-
-
-  // 内訳
-
-  const rows = [
-
-    ['攻撃力', atk],
-
-    ['倍率', multiplier * 100],
-
-    ['基礎ダメージ', baseDamage],
-
-    ['会心係数', crit],
-
-    ['与ダメージ係数', damage],
-
-    ['防御係数', defense],
-
-    ['耐性係数', resistance],
-
-    ['被ダメージ係数', taken],
-
-    ['撃破係数', broken],
-
-    ['最終ダメージ', finalDamage]
-
-  ];
-
-
-  $('breakdown').innerHTML =
-
-    rows
+    breakdownEl.innerHTML = rows
       .map(([name, value]) => {
-
-        const isMultiplier =
-          name.includes('係数');
-
-        const formatted =
-          isMultiplier
-            ? value.toFixed(4)
-            : value.toLocaleString(
-                'ja-JP',
-                {
-                  maximumFractionDigits: 2
-                }
-              );
-
+        const isMultiplier = name.includes('係数');
+        const formatted = isMultiplier
+          ? value.toFixed(4)
+          : value.toLocaleString('ja-JP', { maximumFractionDigits: 1 });
 
         return `
           <div>
@@ -517,94 +267,57 @@ function calculate() {
             <b>${formatted}</b>
           </div>
         `;
-
       })
       .join('');
-
+  }
 }
 
-
 // ========================================
-// 設定保存
+// 設定保存・読み込み
 // ========================================
 
 function saveSettings() {
-
   const data = {};
+  document.querySelectorAll('input, select').forEach(element => {
+    if (!element.id) return;
+    data[element.id] = element.type === 'checkbox' ? element.checked : element.value;
+  });
 
-
-  document
-    .querySelectorAll('input, select')
-    .forEach(element => {
-
-      data[element.id] =
-        element.type === 'checkbox'
-          ? element.checked
-          : element.value;
-
-    });
-
-
-  localStorage.setItem(
-    'hsrCalc',
-    JSON.stringify(data)
-  );
-
-
+  localStorage.setItem('hsrCalc', JSON.stringify(data));
   alert('設定を保存しました');
-
 }
-
-
-// ========================================
-// 設定読み込み
-// ========================================
 
 function loadSettings() {
-
-  const data =
-    JSON.parse(
-      localStorage.getItem('hsrCalc') || 'null'
-    );
-
-
-  if (!data) {
-
+  const rawData = localStorage.getItem('hsrCalc');
+  if (!rawData) {
     alert('保存データがありません');
-
     return;
-
   }
 
+  const data = JSON.parse(rawData);
 
-  Object.entries(data)
-    .forEach(([id, value]) => {
+  if (data.characterSelect) {
+    $('characterSelect').value = data.characterSelect;
+    loadCharacter();
+  }
 
-      const element = $(id);
+  Object.entries(data).forEach(([id, value]) => {
+    const element = $(id);
+    if (!element) return;
 
-      if (!element) return;
+    if (element.type === 'checkbox') {
+      element.checked = value;
+    } else {
+      element.value = value;
+    }
+  });
 
-
-      if (element.type === 'checkbox') {
-
-        element.checked = value;
-
-      } else {
-
-        element.value = value;
-
-      }
-
-    });
-
-
+  applyLightConeBuffs();
   calculate();
-
 }
-
 
 // ========================================
 // 起動
 // ========================================
 
-init();
+window.addEventListener('DOMContentLoaded', init);
