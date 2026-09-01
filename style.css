@@ -22,7 +22,6 @@ body {
   min-height: 100vh;
 }
 
-/* ヘッダー / トップバー */
 .topbar {
   height: 72px;
   display: flex;
@@ -53,7 +52,6 @@ body {
   gap: 7px;
 }
 
-/* ボタン・フォーム要素 */
 button {
   background: var(--panel2);
   border: 1px solid var(--line);
@@ -117,7 +115,6 @@ label input[type="checkbox"] {
   cursor: pointer;
 }
 
-/* メインアプリレイアウト */
 .app {
   max-width: 1500px;
   margin: 18px auto;
@@ -150,7 +147,6 @@ h2 {
   gap: 9px;
 }
 
-/* 中央ヒーローエリア（結果表示） */
 .hero {
   text-align: center;
   padding: 24px;
@@ -217,7 +213,6 @@ h2 {
   color: var(--accent);
 }
 
-/* 内訳 & パーティーグリッド */
 .breakdown {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -255,19 +250,17 @@ h2 {
   padding: 8px;
   font-size: 11px;
   color: var(--muted);
-}
-
-.party-slot input {
-  height: 28px;
-  margin-top: 6px;
-  font-size: 11px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
 }
 
 .party-slot.main {
   border-color: #536b94;
   color: var(--text);
   background: rgba(83, 107, 148, 0.1);
+  font-weight: bold;
 }
 
 footer {
@@ -277,7 +270,6 @@ footer {
   padding: 20px;
 }
 
-/* レスポンシブ */
 @media (max-width: 1050px) {
   .app {
     grid-template-columns: 1fr 1fr;
