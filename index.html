@@ -2,302 +2,127 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>崩壊：スターレイル ダメージ計算機</title>
+  <title>崩壊：スターレイル ダメージ計算ツール</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="container">
+    <h1>崩壊：スターレイル ダメージ計算機</h1>
 
-  <header class="topbar">
-    <div>
-      <div class="logo">HSR DAMAGE CALCULATOR</div>
-      <div class="sub">崩壊：スターレイル ダメージシミュレーター</div>
-    </div>
-    <div class="top-actions">
-      <button id="saveBtn">設定保存</button>
-      <button id="loadBtn">設定読込</button>
-      <button id="resetBtn">リセット</button>
-    </div>
-  </header>
-
-  <main class="app">
-
-    <!-- 左サイドバー：メインアタッカー＆スキル・光円錐設定 -->
-    <aside class="sidebar">
-
-      <section class="card">
-        <h2>キャラクター設定</h2>
-        <label>
-          メインアタッカー
-          <select id="characterSelect"></select>
-        </label>
-        
-        <div class="row">
-          <label>
-            レベル
-            <select id="charLevel">
-              <option value="80" selected>Lv 80</option>
-              <option value="70">Lv 70</option>
-            </select>
-          </label>
-          <label>
-            星魂 (凸数)
-            <select id="eidolonSelect"></select>
-          </label>
+    <!-- メインアタッカー設定 -->
+    <section class="card">
+      <h2>メインアタッカー設定</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>キャラクター:</label>
+          <select id="main-char-select"></select>
         </div>
-
-        <div style="margin-top: 10px;">
-          <span style="font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px;">キャラクター固有バフ</span>
-          <div id="selfBuffsContainer"></div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>攻撃スキル設定</h2>
-        <label>
-          使用スキル
-          <select id="attackSelect"></select>
-        </label>
-        <label>
-          スキル合計倍率 (%)
-          <input type="number" id="multiplier" value="100" step="0.1">
-        </label>
-        <label>
-          固定加算ダメージ
-          <input type="number" id="flatDamage" value="0">
-        </label>
-      </section>
-
-      <section class="card">
-        <h2>光円錐設定</h2>
-        <label>
-          光円錐
-          <select id="lightConeSelect"></select>
-        </label>
-        <div class="row">
-          <label>
-            レベル
-            <select id="coneLevel">
-              <option value="80" selected>Lv 80</option>
-              <option value="70">Lv 70</option>
-            </select>
-          </label>
-          <label>
-            重畳ランク
-            <select id="coneSuper">
-              <option value="S1" selected>重畳 1</option>
-              <option value="S2">重畳 2</option>
-              <option value="S3">重畳 3</option>
-              <option value="S4">重畳 4</option>
-              <option value="S5">重畳 5</option>
-            </select>
-          </label>
-        </div>
-      </section>
-
-    </aside>
-
-    <!-- 中央：結果表示 & パーティー枠 -->
-    <div class="center">
-      <section class="card hero">
-        <div class="hero-title">
-          <span>計算結果</span>
-          <div>
-            <span id="resultCharacter">-</span>
-            <span class="badge" id="resultElement">-</span>
-          </div>
-        </div>
-
-        <div class="damage-number" id="damage">0</div>
-        <div class="damage-caption">想定期待ダメージ（<span id="resultAttack">-</span>）</div>
-
-        <div class="quick-stats">
-          <div>
-            <span>会心係数</span>
-            <b id="qCrit">1.0000</b>
-          </div>
-          <div>
-            <span>与ダメ係数</span>
-            <b id="qDmg">1.0000</b>
-          </div>
-          <div>
-            <span>防御係数</span>
-            <b id="qDef">1.0000</b>
-          </div>
-          <div>
-            <span>耐性係数</span>
-            <b id="qRes">1.0000</b>
-          </div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>ダメージ詳細内訳</h2>
-        <div class="breakdown" id="breakdown"></div>
-      </section>
-
-      <section class="card">
-        <h2>パーティー構成・仲間バフ</h2>
-        <div class="party-grid">
-          <div class="party-slot main">
-            <span id="partyMain">メインアタッカー</span>
-          </div>
-          <div class="party-slot">
-            <span>サポート 1</span>
-            <select id="partyMember1" class="party-select"></select>
-          </div>
-          <div class="party-slot">
-            <span>サポート 2</span>
-            <select id="partyMember2" class="party-select"></select>
-          </div>
-          <div class="party-slot">
-            <span>サポート 3</span>
-            <select id="partyMember3" class="party-select"></select>
-          </div>
-        </div>
-        <div id="partyBuffsContainer" style="margin-top: 12px;"></div>
-      </section>
-    </div>
-
-    <!-- 右サイドバー：遺物・ステータス・敵設定 -->
-    <aside class="rightbar">
-
-      <section class="card">
-        <h2>遺物・オーナメント設定</h2>
-        <label>
-          トンネル遺物 (4セット)
-          <select id="relicSetSelect"></select>
-        </label>
-        <label>
-          次元界オーナメント (2セット)
-          <select id="ornamentSetSelect"></select>
-        </label>
-        
-        <span style="font-size: 11px; color: var(--muted); display: block; margin: 10px 0 5px;">遺物サブステータス合計</span>
-        <div class="row">
-          <label>
-            攻撃力%
-            <input type="number" id="relicAtk" value="0" step="0.1">
-          </label>
-          <label>
-            攻撃力実数値
-            <input type="number" id="flatAtk" value="0">
-          </label>
-        </div>
-        <div class="row">
-          <label>
-            会心率 (%)
-            <input type="number" id="relicCritRate" value="0" step="0.1">
-          </label>
-          <label>
-            会心ダメージ (%)
-            <input type="number" id="relicCritDmg" value="0" step="0.1">
-          </label>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>バフ・調整ステータス</h2>
-        <div class="row">
-          <label>
-            基礎攻撃力 (固定)
-            <input type="number" id="atk" value="0" readonly style="background: #141822; color: var(--muted);">
-          </label>
-          <label>
-            外部攻撃バフ (%)
-            <input type="number" id="buffAtk" value="0" step="0.1">
-          </label>
-        </div>
-        <div class="row">
-          <label>
-            基礎会心率 (%)
-            <input type="number" id="critRate" value="5" step="0.1">
-          </label>
-          <label>
-            基礎会心ダメ (%)
-            <input type="number" id="critDmg" value="50" step="0.1">
-          </label>
-        </div>
-        <div class="row">
-          <label>
-            外部会心率バフ (%)
-            <input type="number" id="buffCrit" value="0" step="0.1">
-          </label>
-          <label>
-            外部会心ダメバフ (%)
-            <input type="number" id="buffCritDmg" value="0" step="0.1">
-          </label>
-        </div>
-        <div class="row">
-          <label>
-            属性与ダメージ (%)
-            <input type="number" id="elementDmg" value="0" step="0.1">
-          </label>
-          <label>
-            外部与ダメバフ (%)
-            <input type="number" id="buffDmg" value="0" step="0.1">
-          </label>
-        </div>
-        <label>
-          会心判定モード
-          <select id="critMode">
-            <option value="average" selected>期待値 (会心率×会心ダメ)</option>
-            <option value="crit">会心発生時</option>
-            <option value="noncrit">非会心時</option>
+        <div class="form-group">
+          <label>レベル:</label>
+          <select id="main-char-level">
+            <option value="80">Lv.80</option>
+            <option value="70">Lv.70</option>
           </select>
-        </label>
-      </section>
-
-      <section class="card">
-        <h2>ターゲット (敵) 設定</h2>
-        <div class="row">
-          <label>
-            敵レベル
-            <input type="number" id="enemyLevel" value="95">
-          </label>
-          <label>
-            属性耐性 (%)
-            <input type="number" id="resistance" value="20" step="1">
-          </label>
         </div>
-        <div class="row">
-          <label>
-            防御ダウン (%)
-            <input type="number" id="defDown" value="0" step="0.1">
-          </label>
-          <label>
-            防御無視 (%)
-            <input type="number" id="defIgnore" value="0" step="0.1">
-          </label>
+        <div class="form-group">
+          <label>星魂（凸数）:</label>
+          <select id="main-char-eidolon"></select>
         </div>
-        <div class="row">
-          <label>
-            耐性貫通 (%)
-            <input type="number" id="resPen" value="0" step="0.1">
-          </label>
-          <label>
-            被ダメージUP (%)
-            <input type="number" id="takenUp" value="0" step="0.1">
-          </label>
+        <div class="form-group">
+          <label>光円錐:</label>
+          <select id="main-lc-select"></select>
         </div>
-        <label>
-          弱点撃破状態
-          <select id="broken">
-            <option value="0.9" selected>通常状態 (10%軽減)</option>
-            <option value="1">弱点撃破中 (軽減なし)</option>
+        <div class="form-group">
+          <label>重畳ランク:</label>
+          <select id="main-lc-rank">
+            <option value="S1">S1</option>
+            <option value="S2">S2</option>
+            <option value="S3">S3</option>
+            <option value="S4">S4</option>
+            <option value="S5">S5</option>
           </select>
-        </label>
-      </section>
+        </div>
+        <div class="form-group">
+          <label>トンネル遺物:</label>
+          <select id="main-relic-select"></select>
+        </div>
+        <div class="form-group">
+          <label>次元オーナメント:</label>
+          <select id="main-ornament-select"></select>
+        </div>
+      </div>
 
-    </aside>
+      <h3>アタッカー追加サブステータス（遺物伸び幅など）</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>攻撃力％ (+%):</label>
+          <input type="number" id="sub-atk-percent" value="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>攻撃力実数値 (+):</label>
+          <input type="number" id="sub-atk-flat" value="0">
+        </div>
+        <div class="form-group">
+          <label>会心率 (+%):</label>
+          <input type="number" id="sub-crit-rate" value="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>会心ダメージ (+%):</label>
+          <input type="number" id="sub-crit-dmg" value="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>与ダメージUP (+%):</label>
+          <input type="number" id="sub-dmg-percent" value="0" step="0.1">
+        </div>
+      </div>
 
-  </main>
+      <h3>自己バフ・状態有効化</h3>
+      <div id="main-self-buffs" class="checkbox-group"></div>
+    </section>
 
-  <footer>
-    <p>Honkai: Star Rail Damage Calculator</p>
-  </footer>
+    <!-- サポートキャラ（パーティ編成）設定 -->
+    <section class="card">
+      <h2>パーティ編成（サポートキャラ編集）</h2>
+      <div id="party-members-container">
+        <!-- サポート1〜3が動的に生成されます -->
+      </div>
+    </section>
+
+    <!-- 計算実行・結果表示 -->
+    <section class="card result-card">
+      <h2>計算結果</h2>
+      <button id="calc-btn" class="btn-primary">ダメージ計算実行</button>
+
+      <div class="result-display">
+        <div class="stat-box">
+          <h3>アタッカー実数値ステータス</h3>
+          <p>最終攻撃力: <span id="res-total-atk">0</span></p>
+          <p>会心率: <span id="res-crit-rate">0</span>%</p>
+          <p>会心ダメージ: <span id="res-crit-dmg">0</span>%</p>
+          <p>与ダメージ補正: <span id="res-dmg-boost">0</span>%</p>
+        </div>
+
+        <div class="damage-box">
+          <h3>想定ダメージ</h3>
+          <table class="damage-table">
+            <thead>
+              <tr>
+                <th>攻撃種類</th>
+                <th>通常ダメージ</th>
+                <th>会心ダメージ</th>
+                <th>期待値</th>
+              </tr>
+            </thead>
+            <tbody id="damage-results-body">
+              <tr><td colspan="4">計算ボタンを押してください</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
