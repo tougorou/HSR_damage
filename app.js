@@ -1,385 +1,408 @@
-// ========================================
-// HSR Damage Calculator - Calculation Core
-// ========================================
+document.addEventListener('DOMContentLoaded', () => {
+  initMainAttackerUI();
+  initSupportPartyUI();
+  
+  document.getElementById('calc-btn').addEventListener('click', calculateDamage);
+  
+  // メインキャラ切り替え時にUIを再構築
+  document.getElementById('main-char-select').addEventListener('change', () => {
+    updateMainCharEidolonOptions();
+    updateMainSelfBuffsUI();
+  });
+});
 
-const $ = id => document.getElementById(id);
-const n = id => { const el = $(id); return el ? (Number(el.value) || 0) : 0; };
-const p = id => n(id) / 100;
+// --- 1. メインアタッカー初期化 ---
+function initMainAttackerUI() {
+  const mainCharSel = document.getElementById('main-char-select');
+  const mainLcSel = document.getElementById('main-lc-select');
+  const mainRelicSel = document.getElementById('main-relic-select');
+  const mainOrnSel = document.getElementById('main-ornament-select');
 
-function init() {
-  const characterSelect = $('characterSelect');
-  const lightConeSelect = $('lightConeSelect');
+  // キャラ選択欄
+  Object.keys(HSR_DATA.characters).forEach(key => {
+    const char = HSR_DATA.characters[key];
+    const opt = document.createElement('option');
+    opt.value = char.id;
+    opt.textContent = char.name;
+    mainCharSel.appendChild(opt);
+  });
 
-  if (characterSelect && HSR_DATA.characters) {
-    characterSelect.innerHTML = '';
-    Object.entries(HSR_DATA.characters).forEach(([id, character]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = character.name;
-      characterSelect.appendChild(option);
+  // 光円錐選択欄
+  Object.keys(HSR_DATA.lightCones).forEach(key => {
+    const lc = HSR_DATA.lightCones[key];
+    const opt = document.createElement('option');
+    opt.value = lc.id;
+    opt.textContent = lc.name;
+    mainLcSel.appendChild(opt);
+  });
+
+  // 遺物選択欄
+  Object.keys(HSR_DATA.relicSets).forEach(key => {
+    const r = HSR_DATA.relicSets[key];
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.name;
+    mainRelicSel.appendChild(opt);
+  });
+
+  // オーナメント選択欄
+  Object.keys(HSR_DATA.ornamentSets).forEach(key => {
+    const o = HSR_DATA.ornamentSets[key];
+    const opt = document.createElement('option');
+    opt.value = o.id;
+    opt.textContent = o.name;
+    mainOrnSel.appendChild(opt);
+  });
+
+  updateMainCharEidolonOptions();
+  updateMainSelfBuffsUI();
+}
+
+function updateMainCharEidolonOptions() {
+  const charId = document.getElementById('main-char-select').value;
+  const char = HSR_DATA.characters[charId];
+  const eidolonSel = document.getElementById('main-char-eidolon');
+  eidolonSel.innerHTML = '';
+
+  if (char && char.eidolons) {
+    Object.keys(char.eidolons).forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e;
+      opt.textContent = char.eidolons[e].name || `${e}凸`;
+      eidolonSel.appendChild(opt);
     });
-    characterSelect.addEventListener('change', loadCharacter);
   }
-
-  if (lightConeSelect && HSR_DATA.lightCones) {
-    lightConeSelect.innerHTML = '';
-    Object.entries(HSR_DATA.lightCones).forEach(([id, cone]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = cone.name;
-      lightConeSelect.appendChild(option);
-    });
-    lightConeSelect.addEventListener('change', loadLightCone);
-  }
-
-  ['relicSetSelect', 'ornamentSetSelect'].forEach(id => {
-    const el = $(id);
-    const dataObj = id === 'relicSetSelect' ? HSR_DATA.relicSets : HSR_DATA.ornamentSets;
-    if (el && dataObj) {
-      el.innerHTML = '';
-      Object.entries(dataObj).forEach(([k, set]) => {
-        const option = document.createElement('option');
-        option.value = k;
-        option.textContent = set.name;
-        el.appendChild(option);
-      });
-      el.addEventListener('change', calculate);
-    }
-  });
-
-  initPartySlots();
-
-  $('charLevel')?.addEventListener('change', updateCharacterStats);
-  $('coneLevel')?.addEventListener('change', loadLightCone);
-  $('eidolonSelect')?.addEventListener('change', calculate);
-  $('coneSuper')?.addEventListener('change', loadLightCone);
-
-  document.querySelectorAll('input, select').forEach(element => {
-    element.addEventListener('input', calculate);
-    element.addEventListener('change', calculate);
-  });
-
-  if ($('saveBtn')) $('saveBtn').onclick = saveSettings;
-  if ($('loadBtn')) $('loadBtn').onclick = loadSettings;
-  if ($('resetBtn')) $('resetBtn').onclick = () => location.reload();
-
-  loadCharacter();
-  loadLightCone();
 }
 
-function initPartySlots() {
-  const partySelects = [$('partyMember1'), $('partyMember2'), $('partyMember3')];
-  partySelects.forEach(select => {
-    if (!select) return;
-    select.innerHTML = '<option value="none">なし</option>';
-    Object.entries(HSR_DATA.characters).forEach(([id, char]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = char.name;
-      select.appendChild(option);
-    });
-    select.addEventListener('change', renderPartyBuffs);
-  });
-}
-
-function loadCharacter() {
-  const charId = $('characterSelect')?.value;
-  const character = HSR_DATA?.characters?.[charId];
-  if (!character) return;
-
-  if ($('partyMain')) $('partyMain').textContent = character.name;
-  if ($('resultCharacter')) $('resultCharacter').textContent = character.name;
-  if ($('resultElement')) $('resultElement').textContent = character.element;
-
-  renderEidolonOptions(character);
-  renderSelfBuffs(character);
-
-  const attackSelect = $('attackSelect');
-  if (attackSelect && character.attacks) {
-    attackSelect.innerHTML = '';
-    Object.entries(character.attacks).forEach(([id, attack]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = attack.name;
-      attackSelect.appendChild(option);
-    });
-    attackSelect.onchange = updateAttackMultiplier;
-  }
-
-  updateCharacterStats();
-  updateAttackMultiplier();
-}
-
-function renderEidolonOptions(character) {
-  const eidolonSelect = $('eidolonSelect');
-  if (!eidolonSelect) return;
-  eidolonSelect.innerHTML = '';
-  Object.entries(character.eidolons || {}).forEach(([lvl, data]) => {
-    const option = document.createElement('option');
-    option.value = lvl;
-    option.textContent = data.name || `${lvl}凸`;
-    eidolonSelect.appendChild(option);
-  });
-}
-
-function renderSelfBuffs(character) {
-  const container = $('selfBuffsContainer');
-  if (!container) return;
-  container.innerHTML = '';
-  Object.entries(character.selfBuffs || {}).forEach(([key, buff]) => {
-    const label = document.createElement('label');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = `selfBuff_${key}`;
-    checkbox.checked = true;
-    checkbox.addEventListener('change', calculate);
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(` ${buff.name}`));
-    container.appendChild(label);
-  });
-}
-
-function renderPartyBuffs() {
-  const container = $('partyBuffsContainer');
-  if (!container) return;
+function updateMainSelfBuffsUI() {
+  const charId = document.getElementById('main-char-select').value;
+  const char = HSR_DATA.characters[charId];
+  const container = document.getElementById('main-self-buffs');
   container.innerHTML = '';
 
-  const members = [$('partyMember1')?.value, $('partyMember2')?.value, $('partyMember3')?.value];
-  members.forEach((memberId, idx) => {
-    if (!memberId || memberId === 'none') return;
-    const char = HSR_DATA.characters[memberId];
-    if (char && char.providedPartyBuffs) {
-      Object.entries(char.providedPartyBuffs).forEach(([bKey, buff]) => {
-        const label = document.createElement('label');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `partyBuff_${idx}_${bKey}`;
-        checkbox.checked = true;
-        checkbox.addEventListener('change', calculate);
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(` [${char.name}] ${buff.name}`));
-        container.appendChild(label);
-      });
-    }
-  });
-
-  calculate();
-}
-
-function updateCharacterStats() {
-  const charId = $('characterSelect')?.value;
-  const level = $('charLevel')?.value || 80;
-  const character = HSR_DATA?.characters?.[charId];
-  if (!character) return;
-
-  const baseStats = character.statsByLevel?.[level] || character.statsByLevel?.[80] || { atk: 0 };
-  const traceStats = character.traceStats || {};
-
-  if ($('atk')) $('atk').value = baseStats.atk || 0;
-  if ($('critRate')) $('critRate').value = 5.0 + (traceStats.critRate || 0);
-  if ($('critDmg')) $('critDmg').value = 50.0 + (traceStats.critDmg || 0);
-  if ($('elementDmg')) $('elementDmg').value = traceStats.elementDmg || 0;
-
-  calculate();
-}
-
-function updateAttackMultiplier() {
-  const charId = $('characterSelect')?.value;
-  const attackId = $('attackSelect')?.value;
-  const character = HSR_DATA?.characters?.[charId];
-  if (!character) return;
-
-  const attack = character.attacks?.[attackId];
-  if (!attack) return;
-
-  const multiplier = attack.multipliers?.[10] || attack.multipliers?.[6] || attack.multipliers?.[1] || 100;
-  if ($('multiplier')) $('multiplier').value = multiplier;
-
-  calculate();
-}
-
-function loadLightCone() {
-  const coneId = $('lightConeSelect')?.value;
-  const rank = $('coneSuper')?.value || 'S1';
-  const cone = HSR_DATA?.lightCones?.[coneId];
-  if (!cone) return;
-
-  const superBuffs = cone.superimposition?.[rank] || {};
-  if ($('buffAtk')) $('buffAtk').value = superBuffs.atkPercent || 0;
-  if ($('buffDmg')) $('buffDmg').value = superBuffs.damagePercent || 0;
-  if ($('buffCritDmg')) $('buffCritDmg').value = superBuffs.critDmg || 0;
-
-  calculate();
-}
-
-function collectAllBuffs(character) {
-  const result = { atkPercent: 0, critRate: 0, critDmg: 0, damagePercent: 0, defIgnore: 0, resPen: 0 };
-
-  // 固有バフ
-  Object.entries(character.selfBuffs || {}).forEach(([k, buff]) => {
-    if ($(`selfBuff_${k}`)?.checked) {
-      if (buff.atkPercent) result.atkPercent += buff.atkPercent;
-      if (buff.critRate) result.critRate += buff.critRate;
-      if (buff.critDmg) result.critDmg += buff.critDmg;
-      if (buff.damagePercent) result.damagePercent += buff.damagePercent;
-      if (buff.resPen) result.resPen += buff.resPen;
-    }
-  });
-
-  // 星魂（凸）
-  const eidolonLevel = Number($('eidolonSelect')?.value || 0);
-  if (character.eidolons) {
-    for (let i = 1; i <= eidolonLevel; i++) {
-      const eData = character.eidolons[i];
-      if (!eData) continue;
-      if (eData.atkPercent) result.atkPercent += eData.atkPercent;
-      if (eData.critRate) result.critRate += eData.critRate;
-      if (eData.critDmg) result.critDmg += eData.critDmg;
-      if (eData.damagePercent) result.damagePercent += eData.damagePercent;
-      if (eData.defIgnore) result.defIgnore += eData.defIgnore;
-      if (eData.resPen) result.resPen += eData.resPen;
-    }
+  if (char && char.selfBuffs) {
+    Object.keys(char.selfBuffs).forEach(key => {
+      const buff = char.selfBuffs[key];
+      const label = document.createElement('label');
+      label.className = 'checkbox-label';
+      label.innerHTML = `
+        <input type="checkbox" class="main-buff-check" value="${key}" checked>
+        ${buff.name}
+      `;
+      container.appendChild(label);
+    });
   }
-
-  // パーティーバフ
-  const members = [$('partyMember1')?.value, $('partyMember2')?.value, $('partyMember3')?.value];
-  members.forEach((mId, idx) => {
-    if (!mId || mId === 'none') return;
-    const char = HSR_DATA.characters[mId];
-    if (char && char.providedPartyBuffs) {
-      Object.entries(char.providedPartyBuffs).forEach(([bKey, buff]) => {
-        if ($(`partyBuff_${idx}_${bKey}`)?.checked) {
-          if (buff.atkPercent) result.atkPercent += buff.atkPercent;
-          if (buff.critRate) result.critRate += buff.critRate;
-          if (buff.critDmg) result.critDmg += buff.critDmg;
-          if (buff.damagePercent) result.damagePercent += buff.damagePercent;
-        }
-      });
-    }
-  });
-
-  // トンネル遺物
-  const relic = HSR_DATA.relicSets?.[$('relicSetSelect')?.value];
-  if (relic) {
-    if (relic.atkPercent) result.atkPercent += relic.atkPercent;
-    if (relic.critRate) result.critRate += relic.critRate;
-    if (relic.critDmg) result.critDmg += relic.critDmg;
-    if (relic.damagePercent) result.damagePercent += relic.damagePercent;
-    if (relic.defIgnore) result.defIgnore += relic.defIgnore;
-  }
-
-  // 次元界オーナメント
-  const ornament = HSR_DATA.ornamentSets?.[$('ornamentSetSelect')?.value];
-  if (ornament) {
-    if (ornament.atkPercent) result.atkPercent += ornament.atkPercent;
-    if (ornament.critRate) result.critRate += ornament.critRate;
-    if (ornament.critDmg) result.critDmg += ornament.critDmg;
-    if (ornament.damagePercent) result.damagePercent += ornament.damagePercent;
-  }
-
-  return result;
 }
 
-function calculate() {
-  const charId = $('characterSelect')?.value;
-  const attackId = $('attackSelect')?.value;
-  const character = HSR_DATA?.characters?.[charId];
-  if (!character) return;
+// --- 2. サポートキャラ編集UIの構築（3枠分） ---
+function initSupportPartyUI() {
+  const container = document.getElementById('party-members-container');
+  container.innerHTML = '';
 
-  const allBuffs = collectAllBuffs(character);
+  for (let i = 1; i <= 3; i++) {
+    const card = document.createElement('div');
+    card.className = 'support-card';
+    card.id = `support-slot-${i}`;
 
-  const charAtk = n('atk');
-  const coneLevel = $('coneLevel')?.value || 80;
-  const coneAtk = HSR_DATA.lightCones[$('lightConeSelect')?.value]?.statsByLevel?.[coneLevel]?.atk || 0;
-  const baseAtk = charAtk + coneAtk;
-
-  const totalAtk = baseAtk * (1 + p('relicAtk') + p('buffAtk') + (allBuffs.atkPercent / 100)) + n('flatAtk');
-
-  const baseDamage = totalAtk * (n('multiplier') / 100) + n('flatDamage');
-
-  const totalCritRate = Math.min(1, Math.max(0, p('critRate') + p('buffCrit') + p('relicCritRate') + (allBuffs.critRate / 100)));
-  const totalCritDmg = p('critDmg') + p('buffCritDmg') + p('relicCritDmg') + (allBuffs.critDmg / 100);
-
-  const mode = $('critMode')?.value || 'average';
-  let crit = 1 + (totalCritRate * totalCritDmg);
-  if (mode === 'crit') crit = 1 + totalCritDmg;
-  if (mode === 'noncrit') crit = 1;
-
-  const damage = 1 + p('elementDmg') + p('buffDmg') + (allBuffs.damagePercent / 100);
-
-  const attackerLevel = n('charLevel') || 80;
-  const enemyLevel = n('enemyLevel') || 95;
-  const totalDefIgnore = Math.min(1, p('defDown') + p('defIgnore') + (allBuffs.defIgnore / 100));
-  const defense = (attackerLevel + 20) / ((attackerLevel + 20) + (enemyLevel + 20) * (1 - totalDefIgnore));
-
-  const totalResPen = p('resPen') + (allBuffs.resPen / 100);
-  const resistance = Math.min(2.0, Math.max(0.2, 1 - (p('resistance') - totalResPen)));
-
-  const taken = 1 + p('takenUp');
-  const broken = $('broken')?.value === '1' ? 1.0 : (Number($('broken')?.value) || 0.9);
-
-  const finalDamage = baseDamage * crit * damage * defense * resistance * taken * broken;
-
-  if ($('damage')) $('damage').textContent = Math.floor(finalDamage).toLocaleString('ja-JP');
-  if ($('resultAttack')) $('resultAttack').textContent = character.attacks?.[attackId]?.name || '-';
-
-  if ($('qCrit')) $('qCrit').textContent = crit.toFixed(4);
-  if ($('qDmg')) $('qDmg').textContent = damage.toFixed(4);
-  if ($('qDef')) $('qDef').textContent = defense.toFixed(4);
-  if ($('qRes')) $('qRes').textContent = resistance.toFixed(4);
-
-  const breakdownEl = $('breakdown');
-  if (breakdownEl) {
-    const rows = [
-      ['最終攻撃力', totalAtk],
-      ['基礎ダメージ', baseDamage],
-      ['会心係数', crit],
-      ['与ダメージ係数', damage],
-      ['防御係数', defense],
-      ['耐性係数', resistance],
-      ['最終ダメージ', finalDamage]
-    ];
-
-    breakdownEl.innerHTML = rows
-      .map(([name, value]) => `
-        <div>
-          <span>${name}</span>
-          <b>${name.includes('係数') ? value.toFixed(4) : value.toLocaleString('ja-JP', { maximumFractionDigits: 1 })}</b>
+    card.innerHTML = `
+      <div class="support-header">
+        <h3>サポート枠 ${i}</h3>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>キャラ選択:</label>
+          <select class="supp-char-select" data-slot="${i}">
+            <option value="none">なし</option>
+          </select>
         </div>
-      `)
-      .join('');
+        <div class="form-group">
+          <label>星魂（凸数）:</label>
+          <select class="supp-eidolon-select" data-slot="${i}">
+            <option value="0">無凸</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>装備光円錐:</label>
+          <select class="supp-lc-select" data-slot="${i}">
+            <option value="none">未装備</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>光円錐重畳:</label>
+          <select class="supp-lc-rank" data-slot="${i}">
+            <option value="S1">S1</option>
+            <option value="S2">S2</option>
+            <option value="S3">S3</option>
+            <option value="S4">S4</option>
+            <option value="S5">S5</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>トンネル遺物:</label>
+          <select class="supp-relic-select" data-slot="${i}">
+            <option value="none">なし</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>次元オーナメント:</label>
+          <select class="supp-ornament-select" data-slot="${i}">
+            <option value="none">なし</option>
+          </select>
+        </div>
+      </div>
+      <div class="supp-buffs-container" id="supp-buffs-${i}"></div>
+    `;
+
+    container.appendChild(card);
+
+    // ドロップダウン選択肢の生成
+    const charSel = card.querySelector('.supp-char-select');
+    const lcSel = card.querySelector('.supp-lc-select');
+    const relicSel = card.querySelector('.supp-relic-select');
+    const ornSel = card.querySelector('.supp-ornament-select');
+
+    Object.keys(HSR_DATA.characters).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = HSR_DATA.characters[key].name;
+      charSel.appendChild(opt);
+    });
+
+    Object.keys(HSR_DATA.lightCones).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = HSR_DATA.lightCones[key].name;
+      lcSel.appendChild(opt);
+    });
+
+    Object.keys(HSR_DATA.relicSets).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = HSR_DATA.relicSets[key].name;
+      relicSel.appendChild(opt);
+    });
+
+    Object.keys(HSR_DATA.ornamentSets).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = HSR_DATA.ornamentSets[key].name;
+      ornSel.appendChild(opt);
+    });
+
+    // イベントバインド
+    charSel.addEventListener('change', (e) => updateSupportSlotUI(e.target.dataset.slot));
   }
 }
 
-function saveSettings() {
-  const data = {};
-  document.querySelectorAll('input, select').forEach(el => {
-    if (el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value;
-  });
-  localStorage.setItem('hsrCalc', JSON.stringify(data));
-  alert('設定を保存しました');
-}
+function updateSupportSlotUI(slot) {
+  const card = document.getElementById(`support-slot-${slot}`);
+  const charId = card.querySelector('.supp-char-select').value;
+  const eidolonSel = card.querySelector('.supp-eidolon-select');
+  const buffContainer = card.querySelector('.supp-buffs-container');
 
-function loadSettings() {
-  const rawData = localStorage.getItem('hsrCalc');
-  if (!rawData) return;
-  const data = JSON.parse(rawData);
+  eidolonSel.innerHTML = '';
+  buffContainer.innerHTML = '';
 
-  if (data.characterSelect) {
-    $('characterSelect').value = data.characterSelect;
-    loadCharacter();
+  if (charId === 'none') return;
+
+  const char = HSR_DATA.characters[charId];
+
+  // 凸数選択肢更新
+  if (char && char.eidolons) {
+    Object.keys(char.eidolons).forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e;
+      opt.textContent = char.eidolons[e].name || `${e}凸`;
+      eidolonSel.appendChild(opt);
+    });
   }
 
-  Object.entries(data).forEach(([id, value]) => {
-    const el = $(id);
-    if (!el) return;
-    if (el.type === 'checkbox') el.checked = value;
-    else el.value = value;
-  });
+  // パーティ提供バフの切り替えUI生成
+  if (char && char.providedPartyBuffs) {
+    const title = document.createElement('strong');
+    title.textContent = '提供可能なパーティバフ:';
+    buffContainer.appendChild(title);
 
-  renderPartyBuffs();
-  loadLightCone();
-  calculate();
+    Object.keys(char.providedPartyBuffs).forEach(key => {
+      const buff = char.providedPartyBuffs[key];
+      const label = document.createElement('label');
+      label.className = 'checkbox-label';
+      label.innerHTML = `
+        <input type="checkbox" class="supp-buff-check" data-slot="${slot}" value="${key}" checked>
+        ${buff.name}
+      `;
+      buffContainer.appendChild(label);
+    });
+  }
 }
 
-window.addEventListener('DOMContentLoaded', init);
+// --- 3. ダメージ計算ロジック ---
+function calculateDamage() {
+  const mainCharId = document.getElementById('main-char-select').value;
+  const mainLevel = document.getElementById('main-char-level').value;
+  const mainEidolon = document.getElementById('main-char-eidolon').value;
+  const mainLcId = document.getElementById('main-lc-select').value;
+  const mainLcRank = document.getElementById('main-lc-rank').value;
+  const mainRelicId = document.getElementById('main-relic-select').value;
+  const mainOrnId = document.getElementById('main-ornament-select').value;
+
+  const mainChar = HSR_DATA.characters[mainCharId];
+  const mainLc = HSR_DATA.lightCones[mainLcId];
+  const mainRelic = HSR_DATA.relicSets[mainRelicId];
+  const mainOrn = HSR_DATA.ornamentSets[mainOrnId];
+
+  // 1. 基礎ステータス計算
+  const baseHp = (mainChar.statsByLevel[mainLevel]?.hp || 0) + (mainLc.statsByLevel?.[mainLevel]?.hp || 0);
+  const baseAtk = (mainChar.statsByLevel[mainLevel]?.atk || 0) + (mainLc.statsByLevel?.[mainLevel]?.atk || 0);
+  const baseDef = (mainChar.statsByLevel[mainLevel]?.def || 0) + (mainLc.statsByLevel?.[mainLevel]?.def || 0);
+
+  // ステータス加算用バフ集計変数
+  let totalAtkPercent = 0;
+  let totalAtkFlat = parseFloat(document.getElementById('sub-atk-flat').value) || 0;
+  let totalCritRate = 5.0 + (parseFloat(document.getElementById('sub-crit-rate').value) || 0); // 基礎会心率 5%
+  let totalCritDmg = 50.0 + (parseFloat(document.getElementById('sub-crit-dmg').value) || 0); // 基礎会心DMG 50%
+  let totalDmgPercent = parseFloat(document.getElementById('sub-dmg-percent').value) || 0;
+  let totalDefIgnore = 0;
+  let totalResPen = 0;
+
+  totalAtkPercent += parseFloat(document.getElementById('sub-atk-percent').value) || 0;
+
+  // 軌跡ステータス加算
+  if (mainChar.traceStats) {
+    totalCritRate += mainChar.traceStats.critRate || 0;
+    totalCritDmg += mainChar.traceStats.critDmg || 0;
+    totalDmgPercent += mainChar.traceStats.elementDmg || 0;
+  }
+
+  // メイン光円錐重畳効果
+  if (mainLc.superimposition && mainLc.superimposition[mainLcRank]) {
+    const lcEffect = mainLc.superimposition[mainLcRank];
+    totalAtkPercent += lcEffect.atkPercent || 0;
+    totalCritRate += lcEffect.critRate || 0;
+    totalCritDmg += lcEffect.critDmg || 0;
+    totalDmgPercent += lcEffect.damagePercent || 0;
+  }
+
+  // メイン遺物セット効果
+  if (mainRelic) {
+    totalAtkPercent += mainRelic.atkPercent || 0;
+    totalCritRate += mainRelic.critRate || 0;
+    totalCritDmg += mainRelic.critDmg || 0;
+    totalDmgPercent += mainRelic.damagePercent || 0;
+    totalDefIgnore += mainRelic.defIgnore || 0;
+  }
+
+  // メインオーナメントセット効果
+  if (mainOrn) {
+    totalAtkPercent += mainOrn.atkPercent || 0;
+    totalCritRate += mainOrn.critRate || 0;
+    totalCritDmg += mainOrn.critDmg || 0;
+    totalDmgPercent += mainOrn.damagePercent || 0;
+  }
+
+  // 2. メインキャラ自己バフ・星魂効果
+  document.querySelectorAll('.main-buff-check:checked').forEach(cb => {
+    const buff = mainChar.selfBuffs[cb.value];
+    if (buff) {
+      totalAtkPercent += buff.atkPercent || 0;
+      totalCritRate += buff.critRate || 0;
+      totalCritDmg += buff.critDmg || 0;
+      totalDmgPercent += buff.damagePercent || 0;
+      totalResPen += buff.resPen || 0;
+      totalDefIgnore += buff.defIgnore || 0;
+    }
+  });
+
+  if (mainChar.eidolons && mainChar.eidolons[mainEidolon]) {
+    const eEffect = mainChar.eidolons[mainEidolon];
+    totalCritRate += eEffect.critRate || 0;
+    totalCritDmg += eEffect.critDmg || 0;
+    totalDmgPercent += eEffect.damagePercent || 0;
+    totalResPen += eEffect.resPen || 0;
+    totalDefIgnore += eEffect.defIgnore || 0;
+  }
+
+  // 3. サポートキャラ編集欄からの効果計算（全3スロット分）
+  for (let i = 1; i <= 3; i++) {
+    const card = document.getElementById(`support-slot-${i}`);
+    if (!card) continue;
+
+    const suppCharId = card.querySelector('.supp-char-select').value;
+    if (suppCharId === 'none') continue;
+
+    const suppChar = HSR_DATA.characters[suppCharId];
+    const suppEidolon = card.querySelector('.supp-eidolon-select').value;
+    const suppLcId = card.querySelector('.supp-lc-select').value;
+    const suppLcRank = card.querySelector('.supp-lc-rank').value;
+    const suppRelicId = card.querySelector('.supp-relic-select').value;
+    const suppOrnId = card.querySelector('.supp-ornament-select').value;
+
+    const suppLc = HSR_DATA.lightCones[suppLcId];
+    const suppRelic = HSR_DATA.relicSets[suppRelicId];
+    const suppOrn = HSR_DATA.ornamentSets[suppOrnId];
+
+    // サポートのオーナメントが全体バフ（例: 折れた竜骨）の場合の加算
+    if (suppOrnId === 'keel') {
+      totalCritDmg += suppOrn.critDmg || 10;
+    }
+
+    // サポートのチェックボックスでONになっている提供バフを加算
+    card.querySelectorAll('.supp-buff-check:checked').forEach(cb => {
+      const buff = suppChar.providedPartyBuffs?.[cb.value];
+      if (buff) {
+        totalAtkPercent += buff.atkPercent || 0;
+        totalCritRate += buff.critRate || 0;
+        totalCritDmg += buff.critDmg || 0;
+        totalDmgPercent += buff.damagePercent || 0;
+        totalResPen += buff.resPen || 0;
+        totalDefIgnore += buff.defIgnore || 0;
+      }
+    });
+  }
+
+  // 4. 最終ステータスの計算
+  const finalAtk = baseAtk * (1 + totalAtkPercent / 100) + totalAtkFlat;
+
+  // 画面に基本ステータスを反映
+  document.getElementById('res-total-atk').textContent = Math.round(finalAtk);
+  document.getElementById('res-crit-rate').textContent = totalCritRate.toFixed(1);
+  document.getElementById('res-crit-dmg').textContent = totalCritDmg.toFixed(1);
+  document.getElementById('res-dmg-boost').textContent = totalDmgPercent.toFixed(1);
+
+  // 5. 各攻撃スキルのダメージ計算
+  const resultsBody = document.getElementById('damage-results-body');
+  resultsBody.innerHTML = '';
+
+  if (!mainChar.attacks) {
+    resultsBody.innerHTML = '<tr><td colspan="4">攻撃データが定義されていません</td></tr>';
+    return;
+  }
+
+  // 防御補正・耐性補正（簡易計算：標準敵レベル80、耐性20%想定）
+  const defMultiplier = (80 + 20) / ((80 + 20) + (80 + 20) * (1 - Math.min(totalDefIgnore, 100) / 100));
+  const resMultiplier = 1.0 - (0.20 - (totalResPen / 100));
+
+  Object.keys(mainChar.attacks).forEach(atkKey => {
+    const atk = mainChar.attacks[atkKey];
+    const multiplier = (atk.multipliers[10] || atk.multipliers[6] || 100) / 100;
+
+    // 基本ダメージ基礎 = 攻撃力 * 倍率
+    const baseDamage = finalAtk * multiplier;
+
+    // 補正適用ダメージ
+    const nonCritDmg = baseDamage * (1 + totalDmgPercent / 100) * defMultiplier * resMultiplier;
+    const critDmg = nonCritDmg * (1 + totalCritDmg / 100);
+
+    const effCritRate = Math.min(Math.max(totalCritRate, 0), 100) / 100;
+    const avgDmg = nonCritDmg * (1 - effCritRate) + critDmg * effCritRate;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${atk.name}</td>
+      <td>${Math.round(nonCritDmg).toLocaleString()}</td>
+      <td><strong style="color: #e03131;">${Math.round(critDmg).toLocaleString()}</strong></td>
+      <td><strong style="color: #2f9e44;">${Math.round(avgDmg).toLocaleString()}</strong></td>
+    `;
+    resultsBody.appendChild(tr);
+  });
+}
